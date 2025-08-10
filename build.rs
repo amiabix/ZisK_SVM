@@ -710,15 +710,14 @@ fn write_proof_request_data(proof_request: &ProofRequest, output_dir: &Path) -> 
 
 /// Generate ZK program files using actual ZisK API
 fn generate_zisk_program_files(output_dir: &Path) {
-    // Generate the ZK program source using real ziskos API
+    // Generate the ZK program source for ZisK zkVM
     let zk_program = r#"
 //! Solana Transaction Validator for ZisK zkVM
 //! 
 //! This program validates Solana transaction simulation results using zero-knowledge proofs.
-//! It uses the actual ZisK API: ziskos::read_input() and ziskos::set_output()
+//! It uses ZisK zkVM input/output mechanisms
 
 use serde::{Deserialize, Serialize};
-use ziskos::{read_input, set_output};
 
 #[derive(Serialize, Deserialize)]
 struct ProofRequest {
@@ -950,7 +949,7 @@ fn validate_solana_transaction(proof_request: &ProofRequest) -> ValidationResult
     fs::write(output_dir.join("zk_program.rs"), zk_program)
         .expect("Failed to write ZK program");
     
-    // Generate ZK program configuration with correct dependencies
+    // Generate ZK program configuration for ZisK zkVM
     let zk_config = r#"
 [package]
 name = "solana_transaction_validator"
@@ -958,7 +957,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ziskos = { git = "https://github.com/0xPolygonHermez/zisk.git" }
 serde = { version = "1.0", features = ["derive"] }
 bincode = "1.3"
 
@@ -970,7 +968,7 @@ path = "zk_program.rs"
     fs::write(output_dir.join("Cargo.toml"), zk_config)
         .expect("Failed to write ZK program config");
     
-    println!("Generated ZK program using actual ZisK API (ziskos crate)");
+    println!("Generated ZK program for ZisK zkVM");
 }
 
 /// ZisK target compilation setup

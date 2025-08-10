@@ -13,16 +13,9 @@ use std::collections::HashMap;
 //! Solana Transaction Validator for ZisK zkVM
 //! 
 //! This program validates Solana transaction simulation results using zero-knowledge proofs.
-//! It uses the actual ZisK API: ziskos::read_input() and ziskos::set_output()
-
-// Mark the main function as the entry point for ZisK
-#![no_main]
-ziskos::entrypoint!(main);
-
-
+//! It prepares data for ZisK zkVM execution and generates ZK input files.
 
 use serde::{Deserialize, Serialize};
-use ziskos::{read_input, set_output};
 
 #[derive(Serialize, Deserialize)]
 struct ProofRequest {

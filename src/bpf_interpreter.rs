@@ -14,9 +14,8 @@
 use std::collections::HashMap;
 use std::convert::TryInto;
 
-// ZisK-specific optimizations
-#[cfg(feature = "zk")]
-use ziskos::{zk_assert, zk_verify};
+// ZisK-specific optimizations - using standard assertions for now
+// TODO: Replace with actual ZisK-specific assertions when available
 
 // Static opcode table for ZisK optimization
 const OP_CYCLES: [u32; 256] = {
@@ -450,8 +449,11 @@ impl BpfInterpreter {
         let opcode = instruction.opcode as usize;
         let cycles_needed = OP_CYCLES[opcode];
         
-        #[cfg(feature = "zk")]
-        zk_assert!(self.context.cycles_remaining >= cycles_needed);
+        // Cycle validation for ZisK compatibility
+        if self.context.cycles_remaining < cycles_needed {
+            self.context.error = Some(format!("Insufficient cycles: need {}, have {}", cycles_needed, self.context.cycles_remaining));
+            return Ok(false);
+        }
         
         self.context.cycles_remaining -= cycles_needed;
         self.context.total_cycles += cycles_needed;

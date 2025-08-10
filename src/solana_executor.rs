@@ -15,9 +15,8 @@ use crate::bpf_interpreter::{BpfInterpreter, SolanaProgramExecutor, ExecutionRes
 use std::collections::HashMap;
 use std::convert::TryInto;
 
-// ZisK-specific features
-#[cfg(feature = "zk")]
-use ziskos::{zk_assert, zk_verify};
+// ZisK-specific features - using standard assertions for now
+// TODO: Replace with actual ZisK-specific assertions when available
 
 // ZisK state serialization constants
 const ACCOUNT_SERIALIZED_SIZE: usize = 128;
