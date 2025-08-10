@@ -10,10 +10,10 @@ use bpf_interpreter::{BpfInterpreter, SolanaProgramExecutor, ExecutionResult};
 use solana_executor::{SolanaExecutionEnvironment, SolanaTransaction, TransactionMessage, TransactionHeader, CompiledInstruction, create_test_account, create_test_program};
 use std::collections::HashMap;
 
-//! Solana Transaction Validator for ZisK zkVM
-//! 
-//! This program validates Solana transaction simulation results using zero-knowledge proofs.
-//! It prepares data for ZisK zkVM execution and generates ZK input files.
+// Solana Transaction Validator for ZisK zkVM
+// 
+// This program validates Solana transaction simulation results using zero-knowledge proofs.
+// It prepares data for ZisK zkVM execution and generates ZK input files.
 
 use serde::{Deserialize, Serialize};
 

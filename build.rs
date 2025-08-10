@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::Path;
 use std::env;
-use uuid;
+use std::process::Command;
 use bincode;
 
 // ZisK-specific build configurations
@@ -141,7 +141,7 @@ fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     
     // ZisK-specific build flags
-    if cfg!(target_arch = "riscv64ima-zisk") {
+    if cfg!(target_arch = "riscv64") {
         println!("cargo:rustc-link-arg=-T{}", ZISK_MEMORY_LAYOUT);
         println!("cargo:rustc-link-arg=-Wl,--gc-sections");
         println!("cargo:rustc-link-arg=-Wl,--strip-all");
@@ -317,8 +317,6 @@ fn fetch_real_solana_data() -> Result<ProofRequest, Box<dyn std::error::Error>> 
 
 /// Fetch multiple Solana blocks for comprehensive validation
 fn fetch_multiple_solana_blocks(block_count: u32) -> Result<MultiBlockProofRequest, Box<dyn std::error::Error>> {
-    use std::process::Command;
-    
     println!("Fetching {} Solana blocks for comprehensive validation...", block_count);
     
     let mut blocks = Vec::new();
@@ -445,8 +443,6 @@ struct BlockDetails {
 
 /// Fetch detailed block information
 fn fetch_block_details(slot: u64) -> Result<BlockDetails, Box<dyn std::error::Error>> {
-    use std::process::Command;
-    
     // Try to fetch actual block data
     let block_output = Command::new("curl")
         .args(&[

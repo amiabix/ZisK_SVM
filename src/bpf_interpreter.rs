@@ -220,13 +220,13 @@ pub enum BpfOpcode {
     AndReg = 0x5F,    // AND registers
     OrReg = 0x6F,     // OR registers
     XorReg = 0x7F,    // XOR registers
-    LshReg = 0x6F,    // Left shift registers
-    RshReg = 0x7F,    // Right shift registers
+    LshReg = 0x6C,    // Left shift registers
+    RshReg = 0x7C,    // Right shift registers
     AndImm = 0x54,    // AND immediate
     OrImm = 0x64,     // OR immediate
     XorImm = 0x74,    // XOR immediate
-    LshImm = 0x64,    // Left shift immediate
-    RshImm = 0x74,    // Right shift immediate
+    LshImm = 0x6D,    // Left shift immediate
+    RshImm = 0x7D,    // Right shift immediate
     
     // Comparison operations
     JeqReg = 0x1D,    // Jump if equal (registers)
