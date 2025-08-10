@@ -81,24 +81,9 @@ impl SolanaExecutionEnvironment {
         }
     }
     
-    /// Add a program to the execution environment
-    pub fn add_program(&mut self, program_id: ProgramId, program_data: Vec<u8>) {
-        self.programs.insert(program_id, program_data);
-    }
-    
     /// Add an account to the execution environment
     pub fn add_account(&mut self, account: SolanaAccount) {
         self.accounts.insert(account.pubkey, account);
-    }
-    
-    /// Get an account from the execution environment
-    pub fn get_account(&self, pubkey: &AccountPubkey) -> Option<&SolanaAccount> {
-        self.accounts.get(pubkey)
-    }
-    
-    /// Get a mutable reference to an account
-    pub fn get_account_mut(&mut self, pubkey: &AccountPubkey) -> Option<&mut SolanaAccount> {
-        self.accounts.get_mut(pubkey)
     }
     
     /// Execute a Solana transaction
@@ -200,99 +185,18 @@ impl SolanaExecutionEnvironment {
         Ok(())
     }
     
-    /// Log a message
-    pub fn log(&mut self, message: String) {
-        self.logs.push(message);
-    }
+
     
-    /// Get execution results
-    pub fn get_results(&self) -> (Vec<String>, Option<Vec<u8>>, Option<String>, u64) {
-        (
-            self.logs.clone(),
-            self.return_data.clone(),
-            self.error.clone(),
-            self.compute_units_used,
-        )
-    }
+
     
-    /// Serialize account for ZisK proof generation
-    pub fn serialize_account(&self, account: &SolanaAccount) -> [u8; ACCOUNT_SERIALIZED_SIZE] {
-        let mut buf = [0u8; ACCOUNT_SERIALIZED_SIZE];
-        
-        // Account public key (32 bytes)
-        buf[..32].copy_from_slice(&account.pubkey);
-        
-        // Lamports (8 bytes)
-        buf[32..40].copy_from_slice(&account.lamports.to_le_bytes());
-        
-        // Owner (32 bytes)
-        buf[40..72].copy_from_slice(&account.owner);
-        
-        // Executable flag (1 byte)
-        buf[72] = if account.executable { 1 } else { 0 };
-        
-        // Rent epoch (8 bytes)
-        buf[73..81].copy_from_slice(&account.rent_epoch.to_le_bytes());
-        
-        // Data length (8 bytes)
-        let data_len = account.data.len() as u64;
-        buf[81..89].copy_from_slice(&data_len.to_le_bytes());
-        
-        // Data (up to 47 bytes, truncated if longer)
-        let data_copy_len = std::cmp::min(47, account.data.len());
-        buf[89..89+data_copy_len].copy_from_slice(&account.data[..data_copy_len]);
-        
-        buf
-    }
+
     
-    /// Serialize entire execution state for ZisK
-    pub fn serialize_state(&self) -> Vec<u8> {
-        let mut state = Vec::new();
-        
-        // Header: compute units and program count
-        state.extend_from_slice(&self.compute_units_used.to_le_bytes());
-        state.extend_from_slice(&(self.programs.len() as u32).to_le_bytes());
-        state.extend_from_slice(&(self.accounts.len() as u32).to_le_bytes());
-        
-        // Serialize all accounts
-        for (pubkey, account) in &self.accounts {
-            state.extend_from_slice(pubkey);
-            state.extend_from_slice(&self.serialize_account(account));
-        }
-        
-        // Serialize logs (truncated to fit in state)
-        let logs_combined: String = self.logs.join("\n");
-        let logs_bytes = logs_combined.as_bytes();
-        let logs_len = std::cmp::min(logs_bytes.len(), 1024);
-        state.extend_from_slice(&(logs_len as u32).to_le_bytes());
-        state.extend_from_slice(&logs_bytes[..logs_len]);
-        
-        state
-    }
-    
-    /// Finalize block and trigger ZisK proof generation
-    pub fn finalize_block(&self) -> Result<(), String> {
-        #[cfg(feature = "zk")]
-        {
-            let state_data = self.serialize_state();
-            std::fs::write("zk_input.bin", &state_data)
-                .map_err(|e| format!("Failed to write ZisK input: {}", e))?;
-            
-            println!("ZisK input written: {} bytes", state_data.len());
-            println!("Ready for proof generation with: cargo zisk prove");
-        }
-        
-        #[cfg(not(feature = "zk"))]
-        {
-            println!("ZisK proof generation not enabled (use --features zk)");
-        }
-        
-        Ok(())
-    }
+
 }
 
 /// Transaction execution result
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct TransactionResult {
     pub success: bool,
     pub instruction_results: Vec<InstructionResult>,
@@ -303,6 +207,7 @@ pub struct TransactionResult {
 
 /// Instruction execution result
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct InstructionResult {
     pub success: bool,
     pub logs: Vec<String>,
@@ -311,214 +216,18 @@ pub struct InstructionResult {
     pub error: Option<String>,
 }
 
-/// Solana System Program implementation
-pub struct SolanaSystemProgram;
 
-impl SolanaSystemProgram {
-    /// Create a new account
-    pub fn create_account(
-        from_account: &mut SolanaAccount,
-        to_account: &mut SolanaAccount,
-        lamports: u64,
-        space: u64,
-        owner: ProgramId,
-    ) -> Result<(), String> {
-        // Check if from account has sufficient lamports
-        if from_account.lamports < lamports {
-            return Err("Insufficient lamports".to_string());
-        }
-        
-        // Transfer lamports
-        from_account.lamports -= lamports;
-        to_account.lamports += lamports;
-        
-        // Set account owner
-        to_account.owner = owner;
-        
-        // Allocate space for account data
-        to_account.data = vec![0; space as usize];
-        
-        Ok(())
-    }
-    
-    /// Transfer lamports between accounts
-    pub fn transfer(
-        from_account: &mut SolanaAccount,
-        to_account: &mut SolanaAccount,
-        lamports: u64,
-    ) -> Result<(), String> {
-        // Check if from account has sufficient lamports
-        if from_account.lamports < lamports {
-            return Err("Insufficient lamports".to_string());
-        }
-        
-        // Transfer lamports
-        from_account.lamports -= lamports;
-        to_account.lamports += lamports;
-        
-        Ok(())
-    }
-    
-    /// Assign account to a new owner
-    pub fn assign(account: &mut SolanaAccount, new_owner: ProgramId) -> Result<(), String> {
-        account.owner = new_owner;
-        Ok(())
-    }
-}
 
-/// Solana Token Program implementation
-pub struct SolanaTokenProgram;
 
-impl SolanaTokenProgram {
-    /// Initialize a new token account
-    pub fn initialize_account(
-        account: &mut SolanaAccount,
-        mint: AccountPubkey,
-        owner: AccountPubkey,
-    ) -> Result<(), String> {
-        // Set account data to token account format
-        let mut data = vec![0; 165]; // Standard token account size
-        
-        // Set mint (first 32 bytes)
-        data[0..32].copy_from_slice(&mint);
-        
-        // Set owner (next 32 bytes)
-        data[32..64].copy_from_slice(&owner);
-        
-        // Set amount (next 8 bytes) - initialize to 0
-        data[64..72].copy_from_slice(&0u64.to_le_bytes());
-        
-        // Set delegate (next 32 bytes) - initialize to None
-        data[72..104].copy_from_slice(&[0u8; 32]);
-        
-        // Set state (next 1 byte) - initialize to Uninitialized
-        data[104] = 0;
-        
-        // Set is_native (next 1 byte) - initialize to false
-        data[105] = 0;
-        
-        // Set delegated_amount (next 8 bytes) - initialize to 0
-        data[106..114].copy_from_slice(&0u64.to_le_bytes());
-        
-        // Set close_authority (next 32 bytes) - initialize to None
-        data[114..146].copy_from_slice(&[0u8; 32]);
-        
-        // Set is_native_option (next 1 byte) - initialize to false
-        data[146] = 0;
-        
-        // Set state (next 1 byte) - initialize to Uninitialized
-        data[147] = 0;
-        
-        // Set is_native_option (next 1 byte) - initialize to false
-        data[148] = 0;
-        
-        // Set state (next 1 byte) - initialize to Uninitialized
-        data[149] = 0;
-        
-        // Set is_native_option (next 1 byte) - initialize to false
-        data[150] = 0;
-        
-        // Set state (next 1 byte) - initialize to Uninitialized
-        data[151] = 0;
-        
-        // Set is_native_option (next 1 byte) - initialize to false
-        data[152] = 0;
-        
-        // Set state (next 1 byte) - initialize to Uninitialized
-        data[153] = 0;
-        
-        // Set is_native_option (next 1 byte) - initialize to false
-        data[154] = 0;
-        
-        // Set state (next 1 byte) - initialize to Uninitialized
-        data[155] = 0;
-        
-        // Set is_native_option (next 1 byte) - initialize to false
-        data[156] = 0;
-        
-        // Set state (next 1 byte) - initialize to Uninitialized
-        data[157] = 0;
-        
-        // Set is_native_option (next 1 byte) - initialize to false
-        data[158] = 0;
-        
-        // Set state (next 1 byte) - initialize to Uninitialized
-        data[159] = 0;
-        
-        // Set is_native_option (next 1 byte) - initialize to false
-        data[160] = 0;
-        
-        // Set state (next 1 byte) - initialize to Uninitialized
-        data[161] = 0;
-        
-        // Set is_native_option (next 1 byte) - initialize to false
-        data[162] = 0;
-        
-        // Set state (next 1 byte) - initialize to Uninitialized
-        data[163] = 0;
-        
-        // Set is_native_option (next 1 byte) - initialize to false
-        data[164] = 0;
-        
-        account.data = data;
-        Ok(())
-    }
-    
-    /// Transfer tokens between accounts
-    pub fn transfer(
-        from_account: &mut SolanaAccount,
-        to_account: &mut SolanaAccount,
-        amount: u64,
-    ) -> Result<(), String> {
-        // Parse from account data
-        if from_account.data.len() < 72 {
-            return Err("Invalid token account data".to_string());
-        }
-        
-        let current_amount = u64::from_le_bytes([
-            from_account.data[64], from_account.data[65], from_account.data[66], from_account.data[67],
-            from_account.data[68], from_account.data[69], from_account.data[70], from_account.data[71]
-        ]);
-        
-        if current_amount < amount {
-            return Err("Insufficient token balance".to_string());
-        }
-        
-        // Update from account balance
-        let new_amount = current_amount - amount;
-        from_account.data[64..72].copy_from_slice(&new_amount.to_le_bytes());
-        
-        // Parse to account data
-        if to_account.data.len() < 72 {
-            return Err("Invalid token account data".to_string());
-        }
-        
-        let to_amount = u64::from_le_bytes([
-            to_account.data[64], to_account.data[65], to_account.data[66], to_account.data[67],
-            to_account.data[68], to_account.data[69], to_account.data[70], to_account.data[71]
-        ]);
-        
-        // Update to account balance
-        let new_to_amount = to_amount + amount;
-        to_account.data[64..72].copy_from_slice(&new_to_amount.to_le_bytes());
-        
-        Ok(())
-    }
-}
 
 /// Helper function to create a test account
-pub fn create_test_account(pubkey: AccountPubkey, owner: ProgramId, lamports: u64) -> SolanaAccount {
-    let mut account = SolanaAccount::new(pubkey, owner);
+pub fn create_test_account(pubkey: AccountPubkey, _owner: ProgramId, lamports: u64) -> SolanaAccount {
+    let mut account = SolanaAccount::new(pubkey);
     account.lamports = lamports;
     account
 }
 
-/// Helper function to create a test program
-pub fn create_test_program(_program_id: ProgramId, instructions: Vec<u8>) -> Vec<u8> {
-    // For now, just return the instructions as-is
-    // In a real implementation, this would compile the instructions to BPF bytecode
-    instructions
-}
+
 
 #[cfg(test)]
 mod tests {
@@ -540,8 +249,7 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(from_account.lamports, 500);
         assert_eq!(to_account.lamports, 500);
-        assert_eq!(to_account.owner, [3u8; 32]);
-        assert_eq!(to_account.data.len(), 100);
+
     }
     
     #[test]
@@ -577,11 +285,8 @@ mod tests {
             message: TransactionMessage {
                 header: TransactionHeader {
                     num_required_signatures: 1,
-                    num_readonly_signed_accounts: 0,
-                    num_readonly_unsigned_accounts: 0,
                 },
                 account_keys: vec![[2u8; 32], [3u8; 32], program_id],
-                recent_blockhash: [0u8; 32],
                 instructions: vec![CompiledInstruction {
                     program_id_index: 2,
                     accounts: vec![0, 1],

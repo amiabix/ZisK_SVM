@@ -7,18 +7,7 @@
 
 
 
-impl std::fmt::Display for ZkError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ZkError::CycleLimitExceeded => write!(f, "Cycle limit exceeded"),
-            ZkError::InvalidMemoryAccess => write!(f, "Invalid memory access"),
-            ZkError::UnsupportedOperation => write!(f, "Unsupported operation"),
-            ZkError::ConstraintViolation => write!(f, "ZisK constraint violation"),
-        }
-    }
-}
 
-impl std::error::Error for ZkError {}
 
 /// BPF instruction cycle costs for ZisK integration
 /// These values are optimized for ZisK zkVM constraints

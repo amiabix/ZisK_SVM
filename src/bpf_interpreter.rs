@@ -223,10 +223,9 @@ impl BpfExecutionContext {
     pub fn new(program: Vec<u8>, compute_units_limit: u64) -> Self {
         Self {
             registers: BpfRegisters::new(),
-            memory: BpfMemory::new(64 * 1024, 8 * 1024), // 64KB heap, 8KB stack
+            memory: BpfMemory::new(64 * 1024), // 64KB heap
             program_counter: 0,
             program,
-            accounts: HashMap::new(),
             compute_units_used: 0,
             compute_units_limit,
             logs: Vec::new(),
@@ -613,11 +612,7 @@ impl BpfInterpreter {
         )
     }
     
-    /// Verify cycle constraints for ZisK
-    #[cfg(feature = "zk")]
-    pub fn verify_cycles(&self) -> bool {
-        self.context.cycles_remaining >= 0 && self.context.total_cycles <= 1000000
-    }
+
 }
 
 /// Solana Program Executor using BPF Interpreter
