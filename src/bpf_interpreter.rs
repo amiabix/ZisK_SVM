@@ -12,76 +12,10 @@
 //! - Error handling and rollback
 
 use std::collections::HashMap;
-use std::convert::TryInto;
+use crate::constants::OP_CYCLES;
 
 // ZisK-specific optimizations - using standard assertions for now
 // TODO: Replace with actual ZisK-specific assertions when available
-
-// Static opcode table for ZisK optimization
-const OP_CYCLES: [u32; 256] = {
-    let mut cycles = [1; 256]; // Default 1 cycle
-    
-    // Load/Store operations
-    cycles[0x30] = 2; // LdAbsB
-    cycles[0x28] = 2; // LdAbsH
-    cycles[0x20] = 2; // LdAbsW
-    cycles[0x18] = 3; // LdAbsDw
-    cycles[0x50] = 3; // LdIndB
-    cycles[0x48] = 3; // LdIndH
-    cycles[0x40] = 3; // LdIndW
-    cycles[0x38] = 4; // LdIndDw
-    
-    // Register operations
-    cycles[0x61] = 1; // LdReg
-    cycles[0x62] = 1; // StReg
-    cycles[0x63] = 1; // StRegImm
-    
-    // Arithmetic operations
-    cycles[0x0F] = 2; // AddReg
-    cycles[0x1F] = 2; // SubReg
-    cycles[0x2F] = 3; // MulReg
-    cycles[0x3F] = 4; // DivReg
-    cycles[0x9F] = 4; // ModReg
-    cycles[0x07] = 1; // AddImm
-    cycles[0x17] = 1; // SubImm
-    cycles[0x27] = 2; // MulImm
-    cycles[0x37] = 3; // DivImm
-    cycles[0x97] = 3; // ModImm
-    
-    // Bitwise operations
-    cycles[0x5F] = 1; // AndReg
-    cycles[0x6F] = 1; // OrReg
-    cycles[0x7F] = 1; // XorReg
-    cycles[0x54] = 1; // AndImm
-    cycles[0x64] = 1; // OrImm
-    cycles[0x74] = 1; // XorImm
-    
-    // Comparison operations
-    cycles[0x1D] = 1; // JeqReg
-    cycles[0x5D] = 1; // JneReg
-    cycles[0x2D] = 1; // JgtReg
-    cycles[0x3D] = 1; // JgeReg
-    cycles[0xAD] = 1; // JltReg
-    cycles[0xBD] = 1; // JleReg
-    cycles[0x15] = 1; // JeqImm
-    cycles[0x55] = 1; // JneImm
-    cycles[0x25] = 1; // JgtImm
-    cycles[0x35] = 1; // JgeImm
-    cycles[0xA5] = 1; // JltImm
-    cycles[0xB5] = 1; // JleImm
-    
-    // Control flow
-    cycles[0x05] = 1; // Ja
-    cycles[0x85] = 2; // Call
-    cycles[0x95] = 1; // Exit
-    
-    // Solana-specific operations
-    cycles[0xE0] = 5; // SolCall
-    cycles[0xE1] = 2; // SolLog
-    cycles[0xE2] = 2; // SolReturn
-    
-    cycles
-};
 
 /// BPF Register Set (64-bit registers as per Solana's BPF implementation)
 #[derive(Debug, Clone, Default)]
@@ -194,10 +128,6 @@ pub enum BpfOpcode {
     LdAbsH = 0x28,    // Load absolute halfword
     LdAbsW = 0x20,    // Load absolute word
     LdAbsDw = 0x18,   // Load absolute doubleword
-    LdIndB = 0x50,    // Load indirect byte
-    LdIndH = 0x48,    // Load indirect halfword
-    LdIndW = 0x40,    // Load indirect word
-    LdIndDw = 0x38,   // Load indirect doubleword
     
     // Register operations
     LdReg = 0x61,     // Load register
@@ -209,38 +139,10 @@ pub enum BpfOpcode {
     SubReg = 0x1F,    // Subtract registers
     MulReg = 0x2F,    // Multiply registers
     DivReg = 0x3F,    // Divide registers
-    ModReg = 0x9F,    // Modulo registers
-    AddImm = 0x07,    // Add immediate
-    SubImm = 0x17,    // Subtract immediate
-    MulImm = 0x27,    // Multiply immediate
-    DivImm = 0x37,    // Divide immediate
-    ModImm = 0x97,    // Modulo immediate
-    
-    // Bitwise operations
-    AndReg = 0x5F,    // AND registers
-    OrReg = 0x6F,     // OR registers
-    XorReg = 0x7F,    // XOR registers
-    LshReg = 0x6C,    // Left shift registers
-    RshReg = 0x7C,    // Right shift registers
-    AndImm = 0x54,    // AND immediate
-    OrImm = 0x64,     // OR immediate
-    XorImm = 0x74,    // XOR immediate
-    LshImm = 0x6D,    // Left shift immediate
-    RshImm = 0x7D,    // Right shift immediate
     
     // Comparison operations
-    JeqReg = 0x1D,    // Jump if equal (registers)
-    JneReg = 0x5D,    // Jump if not equal (registers)
-    JgtReg = 0x2D,    // Jump if greater than (registers)
-    JgeReg = 0x3D,    // Jump if greater than or equal (registers)
-    JltReg = 0xAD,    // Jump if less than (registers)
-    JleReg = 0xBD,    // Jump if less than or equal (registers)
     JeqImm = 0x15,    // Jump if equal (immediate)
     JneImm = 0x55,    // Jump if not equal (immediate)
-    JgtImm = 0x25,    // Jump if greater than (immediate)
-    JgeImm = 0x35,    // Jump if greater than or equal (immediate)
-    JltImm = 0xA5,    // Jump if less than (immediate)
-    JleImm = 0xB5,    // Jump if less than or equal (immediate)
     
     // Control flow
     Ja = 0x05,        // Jump always
@@ -258,30 +160,14 @@ pub enum BpfOpcode {
 pub struct SolanaAccount {
     pub pubkey: [u8; 32],
     pub lamports: u64,
-    pub owner: [u8; 32],
-    pub executable: bool,
-    pub rent_epoch: u64,
-    pub data: Vec<u8>,
 }
 
 impl SolanaAccount {
-    pub fn new(pubkey: [u8; 32], owner: [u8; 32]) -> Self {
+    pub fn new(pubkey: [u8; 32]) -> Self {
         Self {
             pubkey,
             lamports: 0,
-            owner,
-            executable: false,
-            rent_epoch: 0,
-            data: Vec::new(),
         }
-    }
-    
-    pub fn size(&self) -> usize {
-        self.data.len()
-    }
-    
-    pub fn is_writable(&self) -> bool {
-        !self.executable
     }
 }
 
@@ -289,18 +175,12 @@ impl SolanaAccount {
 #[derive(Debug, Clone)]
 pub struct BpfMemory {
     pub heap: Vec<u8>,
-    pub stack: Vec<u8>,
-    pub heap_size: usize,
-    pub stack_size: usize,
 }
 
 impl BpfMemory {
-    pub fn new(heap_size: usize, stack_size: usize) -> Self {
+    pub fn new(heap_size: usize) -> Self {
         Self {
             heap: vec![0; heap_size],
-            stack: vec![0; stack_size],
-            heap_size,
-            stack_size,
         }
     }
     
@@ -320,23 +200,6 @@ impl BpfMemory {
             false
         }
     }
-    
-    pub fn read_stack(&self, offset: usize, size: usize) -> Option<&[u8]> {
-        if offset + size <= self.stack.len() {
-            Some(&self.stack[offset..offset + size])
-        } else {
-            None
-        }
-    }
-    
-    pub fn write_stack(&mut self, offset: usize, data: &[u8]) -> bool {
-        if offset + data.len() <= self.stack.len() {
-            self.stack[offset..offset + data.len()].copy_from_slice(data);
-            true
-        } else {
-            false
-        }
-    }
 }
 
 /// BPF Execution Context
@@ -346,7 +209,6 @@ pub struct BpfExecutionContext {
     pub memory: BpfMemory,
     pub program_counter: usize,
     pub program: Vec<u8>,
-    pub accounts: HashMap<[u8; 32], SolanaAccount>,
     pub compute_units_used: u64,
     pub compute_units_limit: u64,
     pub logs: Vec<String>,
@@ -458,36 +320,58 @@ impl BpfInterpreter {
         self.context.cycles_remaining -= cycles_needed;
         self.context.total_cycles += cycles_needed;
         
+        // Define opcode constants for pattern matching
+        const OP_LD_ABS_B: u8 = BpfOpcode::LdAbsB as u8;
+        const OP_LD_ABS_H: u8 = BpfOpcode::LdAbsH as u8;
+        const OP_LD_ABS_W: u8 = BpfOpcode::LdAbsW as u8;
+        const OP_LD_ABS_DW: u8 = BpfOpcode::LdAbsDw as u8;
+        const OP_LD_REG: u8 = BpfOpcode::LdReg as u8;
+        const OP_ST_REG: u8 = BpfOpcode::StReg as u8;
+        const OP_ST_REG_IMM: u8 = BpfOpcode::StRegImm as u8;
+        const OP_ADD_REG: u8 = BpfOpcode::AddReg as u8;
+        const OP_SUB_REG: u8 = BpfOpcode::SubReg as u8;
+        const OP_MUL_REG: u8 = BpfOpcode::MulReg as u8;
+        const OP_DIV_REG: u8 = BpfOpcode::DivReg as u8;
+        const OP_JEQ_IMM: u8 = BpfOpcode::JeqImm as u8;
+        const OP_JNE_IMM: u8 = BpfOpcode::JneImm as u8;
+        const OP_JA: u8 = BpfOpcode::Ja as u8;
+        const OP_CALL: u8 = BpfOpcode::Call as u8;
+        const OP_EXIT: u8 = BpfOpcode::Exit as u8;
+        const OP_SOL_CALL: u8 = BpfOpcode::SolCall as u8;
+        const OP_SOL_LOG: u8 = BpfOpcode::SolLog as u8;
+        const OP_SOL_RETURN: u8 = BpfOpcode::SolReturn as u8;
+        
         match instruction.opcode {
             // Load operations
-            BpfOpcode::LdAbsB as u8 => self.execute_ld_abs_b(instruction),
-            BpfOpcode::LdAbsH as u8 => self.execute_ld_abs_h(instruction),
-            BpfOpcode::LdAbsW as u8 => self.execute_ld_abs_w(instruction),
-            BpfOpcode::LdAbsDw as u8 => self.execute_ld_abs_dw(instruction),
+            OP_LD_ABS_B => self.execute_ld_abs_b(instruction),
+            OP_LD_ABS_H => self.execute_ld_abs_h(instruction),
+            OP_LD_ABS_W => self.execute_ld_abs_w(instruction),
+            OP_LD_ABS_DW => self.execute_ld_abs_dw(instruction),
+            OP_LD_REG => self.execute_ld_reg(instruction),
             
             // Store operations
-            BpfOpcode::StReg as u8 => self.execute_st_reg(instruction),
-            BpfOpcode::StRegImm as u8 => self.execute_st_reg_imm(instruction),
+            OP_ST_REG => self.execute_st_reg(instruction),
+            OP_ST_REG_IMM => self.execute_st_reg_imm(instruction),
             
             // Arithmetic operations
-            BpfOpcode::AddReg as u8 => self.execute_add_reg(instruction),
-            BpfOpcode::SubReg as u8 => self.execute_sub_reg(instruction),
-            BpfOpcode::MulReg as u8 => self.execute_mul_reg(instruction),
-            BpfOpcode::DivReg as u8 => self.execute_div_reg(instruction),
+            OP_ADD_REG => self.execute_add_reg(instruction),
+            OP_SUB_REG => self.execute_sub_reg(instruction),
+            OP_MUL_REG => self.execute_mul_reg(instruction),
+            OP_DIV_REG => self.execute_div_reg(instruction),
             
             // Comparison and jumps
-            BpfOpcode::JeqImm as u8 => self.execute_jeq_imm(instruction),
-            BpfOpcode::JneImm as u8 => self.execute_jne_imm(instruction),
-            BpfOpcode::Ja as u8 => self.execute_ja(instruction),
+            OP_JEQ_IMM => self.execute_jeq_imm(instruction),
+            OP_JNE_IMM => self.execute_jne_imm(instruction),
+            OP_JA => self.execute_ja(instruction),
             
             // Control flow
-            BpfOpcode::Call as u8 => self.execute_call(instruction),
-            BpfOpcode::Exit as u8 => self.execute_exit(instruction),
+            OP_CALL => self.execute_call(instruction),
+            OP_EXIT => self.execute_exit(instruction),
             
             // Solana-specific operations
-            BpfOpcode::SolCall as u8 => self.execute_sol_call(instruction),
-            BpfOpcode::SolLog as u8 => self.execute_sol_log(instruction),
-            BpfOpcode::SolReturn as u8 => self.execute_sol_return(instruction),
+            OP_SOL_CALL => self.execute_sol_call(instruction),
+            OP_SOL_LOG => self.execute_sol_log(instruction),
+            OP_SOL_RETURN => self.execute_sol_return(instruction),
             
             _ => {
                 self.context.error = Some(format!("Unsupported opcode: 0x{:02X}", instruction.opcode));
@@ -548,6 +432,13 @@ impl BpfInterpreter {
             self.context.error = Some("Invalid memory access".to_string());
             return Ok(false);
         }
+        Ok(true)
+    }
+    
+    // Load register (copy value from src_reg to dst_reg)
+    fn execute_ld_reg(&mut self, instruction: &BpfInstruction) -> Result<bool, String> {
+        let src_value = self.context.registers.get(instruction.src_reg);
+        self.context.registers.set(instruction.dst_reg, src_value);
         Ok(true)
     }
     
@@ -713,18 +604,13 @@ impl BpfInterpreter {
     }
     
     // Get execution results
-    pub fn get_results(self) -> (Vec<String>, Option<Vec<u8>>, Option<String>, u64) {
+    pub fn get_results(&self) -> (Vec<String>, Option<Vec<u8>>, Option<String>, u64) {
         (
-            self.context.logs,
-            self.context.return_data,
-            self.context.error,
+            self.context.logs.clone(),
+            self.context.return_data.clone(),
+            self.context.error.clone(),
             self.context.compute_units_used,
         )
-    }
-    
-    /// Get cycle statistics for ZisK proof generation
-    pub fn get_cycle_stats(&self) -> (u32, u32) {
-        (self.context.total_cycles, self.context.cycles_remaining)
     }
     
     /// Verify cycle constraints for ZisK

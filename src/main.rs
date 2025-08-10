@@ -1,14 +1,24 @@
+#![no_main]
 //! Solana Transaction Validator with BPF Interpreter for ZisK zkVM
 //! 
 //! This program demonstrates how to execute Solana programs directly within the ZisK zkVM
 //! using our custom BPF interpreter, similar to ZpokenWeb3's approach but adapted for ZisK.
+//! 
+//! ZisK Integration:
+//! - Uses ziskos::entrypoint! for ZisK compatibility
+//! - Implements cycle accounting for ZisK constraints
+//! - Optimized for ZisK zkVM execution
 
+mod constants;
 mod bpf_interpreter;
 mod solana_executor;
 
-use bpf_interpreter::{BpfInterpreter, SolanaProgramExecutor, ExecutionResult};
-use solana_executor::{SolanaExecutionEnvironment, SolanaTransaction, TransactionMessage, TransactionHeader, CompiledInstruction, create_test_account, create_test_program};
-use std::collections::HashMap;
+use bpf_interpreter::{BpfInterpreter, SolanaProgramExecutor};
+use solana_executor::{SolanaExecutionEnvironment, SolanaTransaction, TransactionMessage, TransactionHeader, CompiledInstruction, create_test_account};
+
+// ZisK zkVM Integration
+// Mark the main function as the entry point for ZisK
+ziskos::entrypoint!(main);
 
 // Solana Transaction Validator for ZisK zkVM
 // 
@@ -141,7 +151,7 @@ fn test_bpf_interpreter() {
     let mut interpreter = BpfInterpreter::new(program, 1000);
     match interpreter.execute() {
         Ok(_) => {
-            let (logs, return_data, error, compute_units) = interpreter.get_results();
+            let (_logs, _return_data, error, compute_units) = interpreter.get_results();
             println!("  ✅ BPF program executed successfully");
             println!("  📊 Compute units used: {}", compute_units);
             if let Some(error) = error {
@@ -244,78 +254,3 @@ fn test_transaction_validation() {
     }
 }
 
-struct ValidationResult {
-    valid: bool,
-    error_code: u32,
-}
-
-fn validate_solana_transaction(proof_request: &ProofRequest) -> ValidationResult {
-    let intent = &proof_request.intent;
-    let simulation = &proof_request.simulation;
-    
-    // Validation 1: Compute units within reasonable bounds
-    if simulation.compute_units_used == 0 {
-        return ValidationResult { valid: false, error_code: 1 }; // No compute units used
-    }
-    if simulation.compute_units_used > intent.compute_budget.max_compute_units as u64 {
-        return ValidationResult { valid: false, error_code: 2 }; // Exceeded compute budget
-    }
-    if simulation.compute_units_used > 1_400_000 {
-        return ValidationResult { valid: false, error_code: 3 }; // Exceeded Solana max
-    }
-    
-    // Validation 2: Fee calculations
-    let base_fee = 5_000; // Base signature fee
-    let compute_fee = simulation.compute_units_used * intent.compute_budget.compute_unit_price;
-    let expected_min_fee = base_fee + compute_fee;
-    
-    if simulation.fee_paid < expected_min_fee {
-        return ValidationResult { valid: false, error_code: 4 }; // Fee too low
-    }
-    if simulation.fee_paid > intent.max_fee {
-        return ValidationResult { valid: false, error_code: 5 }; // Fee exceeds max
-    }
-    
-    // Validation 3: Account changes consistency
-    if simulation.account_changes.len() > 100 {
-        return ValidationResult { valid: false, error_code: 6 }; // Too many account changes
-    }
-    
-    // Validation 4: Lamports conservation (simplified)
-    let mut total_lamports_change: i64 = 0;
-    for change in &simulation.account_changes {
-        let change_amount = change.lamports_after as i64 - change.lamports_before as i64;
-        total_lamports_change += change_amount;
-    }
-    
-    // Total should decrease by at least the fee amount (due to fee burning)
-    if total_lamports_change > -(simulation.fee_paid as i64) {
-        return ValidationResult { valid: false, error_code: 7 }; // Lamports conservation violated
-    }
-    
-    // Validation 5: Success consistency
-    if simulation.success && simulation.error.is_some() {
-        return ValidationResult { valid: false, error_code: 8 }; // Success but has error
-    }
-    if !simulation.success && simulation.error.is_none() {
-        return ValidationResult { valid: false, error_code: 9 }; // Failed but no error
-    }
-    
-    // Validation 6: Merkle proof structure
-    if simulation.state_merkle_proof.root.len() != 32 {
-        return ValidationResult { valid: false, error_code: 10 }; // Invalid merkle root length
-    }
-    
-    // Validation 7: State consistency
-    if simulation.pre_execution_state.slot != simulation.post_execution_state.slot {
-        return ValidationResult { valid: false, error_code: 11 }; // Slot mismatch
-    }
-    
-    // Validation 8: Slot consistency
-    if simulation.pre_execution_state.slot != intent.slot {
-        return ValidationResult { valid: false, error_code: 12 }; // Intent slot mismatch
-    }
-    
-    // All validations passed
-    ValidationResult { valid: true, error_code: 0 }
-}

@@ -11,16 +11,14 @@
 //! - Transaction simulation and validation
 //! - State consistency verification
 
-use crate::bpf_interpreter::{BpfInterpreter, SolanaProgramExecutor, ExecutionResult, SolanaAccount};
+use crate::bpf_interpreter::{SolanaProgramExecutor, SolanaAccount};
 use std::collections::HashMap;
-use std::convert::TryInto;
 
 // ZisK-specific features - using standard assertions for now
 // TODO: Replace with actual ZisK-specific assertions when available
 
 // ZisK state serialization constants
-const ACCOUNT_SERIALIZED_SIZE: usize = 128;
-const STATE_SNAPSHOT_SIZE: usize = 1024;
+
 
 /// Solana Program ID (32-byte public key)
 pub type ProgramId = [u8; 32];
@@ -28,21 +26,7 @@ pub type ProgramId = [u8; 32];
 /// Solana Account Public Key (32-byte public key)
 pub type AccountPubkey = [u8; 32];
 
-/// Solana Instruction
-#[derive(Debug, Clone)]
-pub struct SolanaInstruction {
-    pub program_id: ProgramId,
-    pub accounts: Vec<AccountMeta>,
-    pub data: Vec<u8>,
-}
 
-/// Solana Account Metadata
-#[derive(Debug, Clone)]
-pub struct AccountMeta {
-    pub pubkey: AccountPubkey,
-    pub is_signer: bool,
-    pub is_writable: bool,
-}
 
 /// Solana Transaction
 #[derive(Debug, Clone)]
@@ -56,7 +40,6 @@ pub struct SolanaTransaction {
 pub struct TransactionMessage {
     pub header: TransactionHeader,
     pub account_keys: Vec<AccountPubkey>,
-    pub recent_blockhash: [u8; 32],
     pub instructions: Vec<CompiledInstruction>,
 }
 
@@ -64,8 +47,6 @@ pub struct TransactionMessage {
 #[derive(Debug, Clone)]
 pub struct TransactionHeader {
     pub num_required_signatures: u8,
-    pub num_readonly_signed_accounts: u8,
-    pub num_readonly_unsigned_accounts: u8,
 }
 
 /// Solana Compiled Instruction
@@ -133,7 +114,7 @@ impl SolanaExecutionEnvironment {
         
         // Execute each instruction
         let mut instruction_results = Vec::new();
-        for (index, instruction) in transaction.message.instructions.iter().enumerate() {
+        for (_index, instruction) in transaction.message.instructions.iter().enumerate() {
             let result = self.execute_instruction(instruction, &transaction.message.account_keys)?;
             instruction_results.push(result);
             
@@ -185,16 +166,16 @@ impl SolanaExecutionEnvironment {
         self.compute_units_used += result.compute_units_used;
         
         // Add logs
-        self.logs.extend(result.logs);
+        self.logs.extend(result.logs.clone());
         
         // Set return data if available
-        if let Some(data) = result.return_data {
-            self.return_data = Some(data);
+        if let Some(ref data) = result.return_data {
+            self.return_data = Some(data.clone());
         }
         
         // Set error if available
-        if let Some(error) = result.error {
-            self.error = Some(error);
+        if let Some(ref error) = result.error {
+            self.error = Some(error.clone());
         }
         
         Ok(InstructionResult {
@@ -225,11 +206,11 @@ impl SolanaExecutionEnvironment {
     }
     
     /// Get execution results
-    pub fn get_results(self) -> (Vec<String>, Option<Vec<u8>>, Option<String>, u64) {
+    pub fn get_results(&self) -> (Vec<String>, Option<Vec<u8>>, Option<String>, u64) {
         (
-            self.logs,
-            self.return_data,
-            self.error,
+            self.logs.clone(),
+            self.return_data.clone(),
+            self.error.clone(),
             self.compute_units_used,
         )
     }
@@ -533,7 +514,7 @@ pub fn create_test_account(pubkey: AccountPubkey, owner: ProgramId, lamports: u6
 }
 
 /// Helper function to create a test program
-pub fn create_test_program(program_id: ProgramId, instructions: Vec<u8>) -> Vec<u8> {
+pub fn create_test_program(_program_id: ProgramId, instructions: Vec<u8>) -> Vec<u8> {
     // For now, just return the instructions as-is
     // In a real implementation, this would compile the instructions to BPF bytecode
     instructions

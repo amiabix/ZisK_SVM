@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 default-run = "solana_test"
 
+[features]
+default = []
+zk = []
+
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -11,6 +15,7 @@ reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "1.0", features = ["full"] }
 anyhow = "1.0"
 uuid = { version = "1.0", features = ["v4"] }
+ziskos = { git = "https://github.com/0xPolygonHermez/zisk.git" }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -23,12 +28,4 @@ lto = true
 codegen-units = 1
 panic = "abort"
 
-# ZisK-specific target configuration
-[target.riscv64ima-zisk-zkvm-elf]
-rustflags = [
-    "-C", "link-arg=-Tzisk-memory.x",
-    "-C", "link-arg=-Wl,--gc-sections",
-    "-C", "link-arg=-Wl,--strip-all",
-    "-C", "link-arg=-nostdlib",
-    "-C", "link-arg=-static"
-]
+
