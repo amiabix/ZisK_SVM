@@ -1,6 +1,6 @@
 # Solana Virtual Machine with ZisK Integration
 
-A production-ready implementation of a Solana Virtual Machine (SVM) integrated with the ZisK zero-knowledge virtual machine for generating cryptographic proofs of transaction execution.
+An implementation of a Solana Virtual Machine (SVM) integrated with the ZisK zero-knowledge virtual machine for generating cryptographic proofs of transaction execution.
 
 ## Overview
 
@@ -198,63 +198,6 @@ Linker script that defines the memory layout for ZisK execution. This file confi
 - Section placement rules
 - Symbol definitions for Rust integration
 - Alignment and optimization settings
-
-## Dependencies
-
-### Core Dependencies
-- `solana-rbpf`: Official Solana BPF interpreter
-- `solana-sdk`: Solana development kit
-- `ed25519-dalek`: Ed25519 signature verification
-- `sha2`: Cryptographic hashing
-- `anyhow`: Error handling and context
-
-### ZisK Dependencies
-- `ziskos`: ZisK zero-knowledge virtual machine
-- Target: `riscv64ima-zisk-zkvm-elf`
-
-### Build Dependencies
-- `reqwest`: HTTP client for RPC calls
-- `bs58`: Base58 encoding/decoding
-- `chrono`: Date and time handling
-- `serde`: Serialization framework
-
-## Usage
-
-### Building for ZisK
-
-```bash
-# Build for ZisK execution target
-cargo build --target riscv64ima-zisk-zkvm-elf --release
-
-# Generate ZisK input files with real transaction data
-cargo build
-```
-
-### ZisK Execution
-
-```bash
-# Execute with ZisK using generated input
-zisk prove --input build/input.bin --output proof.bin
-
-# Verify generated proof
-zisk verify --input build/input.bin --proof proof.bin
-```
-
-### Development
-
-```bash
-# Run tests
-cargo test
-
-# Check compilation
-cargo check
-
-# Format code
-cargo fmt
-
-# Lint code
-cargo clippy
-```
 
 ## Technical Specifications
 
