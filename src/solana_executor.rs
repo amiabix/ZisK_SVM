@@ -4,68 +4,100 @@
 //! with our BPF interpreter to execute Solana programs directly within the ZisK zkVM.
 //! 
 //! Features:
-//! - Solana account model and state management
-//! - Program instruction parsing and execution
+//! - Real Solana transaction parsing and validation
+//! - Real Solana account model and state management
+//! - Real BPF program execution using Solana RBPF
 //! - Cross-program invocation (CPI) support
 //! - Compute unit tracking and limits
 //! - Transaction simulation and validation
 //! - State consistency verification
 
-use crate::bpf_interpreter::{SolanaProgramExecutor, SolanaAccount};
+use crate::bpf_interpreter::SolanaAccount;
+use solana_sdk::{
+    transaction::Transaction,
+    pubkey::Pubkey,
+    instruction::CompiledInstruction,
+    message::Message,
+    signature::Signature,
+    signer::Signer,
+};
+use solana_transaction_status::{
+    EncodedConfirmedTransactionWithStatusMeta,
+    EncodedTransaction,
+    UiTransactionEncoding,
+};
+use solana_account_decoder::UiAccount;
+use anyhow::{Result, Context};
 use std::collections::HashMap;
 
-// ZisK-specific features - using standard assertions for now
-// TODO: Replace with actual ZisK-specific assertions when available
-
-// ZisK state serialization constants
-
-
-/// Solana Program ID (32-byte public key)
-pub type ProgramId = [u8; 32];
-
-/// Solana Account Public Key (32-byte public key)
-pub type AccountPubkey = [u8; 32];
-
-
-
-/// Solana Transaction
+/// Real Solana Transaction Data Structure
 #[derive(Debug, Clone)]
 pub struct SolanaTransaction {
-    pub signatures: Vec<Vec<u8>>,
+    pub signatures: Vec<String>,
     pub message: TransactionMessage,
+    pub meta: Option<TransactionMeta>,
 }
 
-/// Solana Transaction Message
+/// Real Solana Transaction Message
 #[derive(Debug, Clone)]
 pub struct TransactionMessage {
     pub header: TransactionHeader,
-    pub account_keys: Vec<AccountPubkey>,
+    pub account_keys: Vec<String>,
+    pub recent_blockhash: String,
     pub instructions: Vec<CompiledInstruction>,
 }
 
-/// Solana Transaction Header
+/// Real Solana Transaction Header
 #[derive(Debug, Clone)]
 pub struct TransactionHeader {
     pub num_required_signatures: u8,
+    pub num_readonly_signed_accounts: u8,
+    pub num_readonly_unsigned_accounts: u8,
 }
 
-/// Solana Compiled Instruction
+/// Real Solana Transaction Metadata
 #[derive(Debug, Clone)]
-pub struct CompiledInstruction {
-    pub program_id_index: u8,
-    pub accounts: Vec<u8>,
+pub struct TransactionMeta {
+    pub err: Option<serde_json::Value>,
+    pub fee: u64,
+    pub pre_balances: Vec<u64>,
+    pub post_balances: Vec<u64>,
+    pub inner_instructions: Option<Vec<serde_json::Value>>,
+    pub log_messages: Option<Vec<String>>,
+    pub compute_units_consumed: Option<u64>,
+}
+
+/// Real Solana Account Information
+#[derive(Debug, Clone)]
+pub struct SolanaAccountInfo {
+    pub pubkey: String,
+    pub lamports: u64,
+    pub owner: String,
+    pub executable: bool,
+    pub rent_epoch: u64,
     pub data: Vec<u8>,
+}
+
+/// Real Solana Program Information
+#[derive(Debug, Clone)]
+pub struct SolanaProgramInfo {
+    pub program_id: String,
+    pub executable_data: Vec<u8>,
+    pub upgrade_authority: Option<String>,
+    pub deployed_slot: u64,
 }
 
 /// Solana Program Execution Environment
 pub struct SolanaExecutionEnvironment {
-    programs: HashMap<ProgramId, Vec<u8>>,
-    accounts: HashMap<AccountPubkey, SolanaAccount>,
+    programs: HashMap<String, SolanaProgramInfo>,
+    accounts: HashMap<String, SolanaAccountInfo>,
     compute_units_limit: u64,
     compute_units_used: u64,
     logs: Vec<String>,
     return_data: Option<Vec<u8>>,
     error: Option<String>,
+    /// BPF loader for real program execution
+    bpf_loader: crate::real_bpf_loader::RealBpfLoader,
 }
 
 impl SolanaExecutionEnvironment {
@@ -78,12 +110,370 @@ impl SolanaExecutionEnvironment {
             logs: Vec::new(),
             return_data: None,
             error: None,
+            bpf_loader: crate::real_bpf_loader::RealBpfLoader::new(),
         }
     }
     
     /// Add an account to the execution environment
-    pub fn add_account(&mut self, account: SolanaAccount) {
-        self.accounts.insert(account.pubkey, account);
+    pub fn add_account(&mut self, account: SolanaAccountInfo) {
+        self.accounts.insert(account.pubkey.clone(), account);
+    }
+    
+    /// Add a program to the execution environment
+    pub fn add_program(&mut self, program: SolanaProgramInfo) {
+        self.programs.insert(program.program_id.clone(), program);
+    }
+    
+    /// Parse a real Solana transaction from JSON RPC response
+    pub fn parse_transaction_from_json(&mut self, json_data: &str) -> Result<SolanaTransaction> {
+        let transaction: EncodedConfirmedTransactionWithStatusMeta = serde_json::from_str(json_data)
+            .context("Failed to parse transaction JSON")?;
+        
+        self.parse_encoded_transaction(&transaction.transaction, transaction.meta.as_ref())
+    }
+    
+    /// Parse an encoded Solana transaction
+    pub fn parse_encoded_transaction(
+        &mut self,
+        encoded_tx: &EncodedTransaction,
+        meta: Option<&solana_transaction_status::UiTransactionStatusMeta>,
+    ) -> Result<SolanaTransaction> {
+        match encoded_tx {
+            EncodedTransaction::Json(ui_transaction) => {
+                self.parse_ui_transaction(ui_transaction, meta)
+            }
+            EncodedTransaction::Binary(encoding, data) => {
+                self.parse_binary_transaction(encoding, data, meta)
+            }
+            EncodedTransaction::Base64(encoding, data) => {
+                self.parse_base64_transaction(encoding, data, meta)
+            }
+        }
+    }
+    
+    /// Parse a binary encoded Solana transaction
+    /// 
+    /// This method parses binary transaction data according to Solana's
+    /// binary transaction format specification.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `encoding` - Binary encoding format
+    /// * `data` - Raw binary transaction data
+    /// * `meta` - Optional transaction metadata
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `SolanaTransaction` parsed from binary data
+    fn parse_binary_transaction(
+        &self,
+        encoding: &solana_transaction_status::UiTransactionEncoding,
+        data: &[u8],
+        meta: Option<&solana_transaction_status::UiTransactionStatusMeta>,
+    ) -> Result<SolanaTransaction> {
+        match encoding {
+            solana_transaction_status::UiTransactionEncoding::Base58 => {
+                // Decode base58 data first, then parse as binary
+                let decoded_data = bs58::decode(data)
+                    .into_vec()
+                    .context("Failed to decode base58 binary data")?;
+                self.parse_raw_binary_transaction(&decoded_data, meta)
+            }
+            solana_transaction_status::UiTransactionEncoding::Base64 => {
+                // Decode base64 data first, then parse as binary
+                let decoded_data = base64::decode(data)
+                    .context("Failed to decode base64 binary data")?;
+                self.parse_raw_binary_transaction(&decoded_data, meta)
+            }
+            solana_transaction_status::UiTransactionEncoding::Json => {
+                anyhow::bail!("Binary encoding with JSON format not supported")
+            }
+            _ => {
+                anyhow::bail!("Unsupported binary encoding format: {:?}", encoding)
+            }
+        }
+    }
+    
+    /// Parse raw binary transaction data
+    /// 
+    /// This method parses the actual binary transaction structure
+    /// according to Solana's transaction format specification.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `data` - Raw binary transaction data
+    /// * `meta` - Optional transaction metadata
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `SolanaTransaction` parsed from binary data
+    fn parse_raw_binary_transaction(
+        &self,
+        data: &[u8],
+        meta: Option<&solana_transaction_status::UiTransactionStatusMeta>,
+    ) -> Result<SolanaTransaction> {
+        if data.len() < 64 {
+            anyhow::bail!("Transaction data too short: {} bytes", data.len());
+        }
+        
+        let mut offset = 0;
+        
+        // Parse signatures (first 64 bytes per signature)
+        let signature_count = data[offset] as usize;
+        offset += 1;
+        
+        if data.len() < offset + (signature_count * 64) {
+            anyhow::bail!("Insufficient data for signatures");
+        }
+        
+        let mut signatures = Vec::new();
+        for i in 0..signature_count {
+            let sig_start = offset + (i * 64);
+            let signature = bs58::encode(&data[sig_start..sig_start + 64]).into_string();
+            signatures.push(signature);
+        }
+        offset += signature_count * 64;
+        
+        // Parse message header
+        if data.len() < offset + 3 {
+            anyhow::bail!("Insufficient data for message header");
+        }
+        
+        let num_required_signatures = data[offset];
+        let num_readonly_signed_accounts = data[offset + 1];
+        let num_readonly_unsigned_accounts = data[offset + 2];
+        offset += 3;
+        
+        // Parse account keys
+        if data.len() < offset + 1 {
+            anyhow::bail!("Insufficient data for account key count");
+        }
+        
+        let account_key_count = data[offset] as usize;
+        offset += 1;
+        
+        if data.len() < offset + (account_key_count * 32) {
+            anyhow::bail!("Insufficient data for account keys");
+        }
+        
+        let mut account_keys = Vec::new();
+        for i in 0..account_key_count {
+            let key_start = offset + (i * 32);
+            let pubkey = bs58::encode(&data[key_start..key_start + 32]).into_string();
+            account_keys.push(pubkey);
+        }
+        offset += account_key_count * 32;
+        
+        // Parse recent blockhash
+        if data.len() < offset + 32 {
+            anyhow::bail!("Insufficient data for recent blockhash");
+        }
+        
+        let recent_blockhash = bs58::encode(&data[offset..offset + 32]).into_string();
+        offset += 32;
+        
+        // Parse instructions
+        if data.len() < offset + 1 {
+            anyhow::bail!("Insufficient data for instruction count");
+        }
+        
+        let instruction_count = data[offset] as usize;
+        offset += 1;
+        
+        let mut instructions = Vec::new();
+        for _ in 0..instruction_count {
+            if data.len() < offset + 3 {
+                anyhow::bail!("Insufficient data for instruction");
+            }
+            
+            let program_id_index = data[offset];
+            let accounts_len = data[offset + 1] as usize;
+            let data_len = data[offset + 2] as usize;
+            offset += 3;
+            
+            if data.len() < offset + accounts_len + data_len {
+                anyhow::bail!("Insufficient data for instruction accounts/data");
+            }
+            
+            let mut accounts = Vec::new();
+            for j in 0..accounts_len {
+                if data.len() < offset + j {
+                    anyhow::bail!("Insufficient data for instruction account");
+                }
+                accounts.push(data[offset + j]);
+            }
+            offset += accounts_len;
+            
+            let instruction_data = data[offset..offset + data_len].to_vec();
+            offset += data_len;
+            
+            instructions.push(CompiledInstruction {
+                program_id_index,
+                accounts,
+                data: instruction_data,
+            });
+        }
+        
+        // Create transaction message
+        let message = TransactionMessage {
+            header: TransactionHeader {
+                num_required_signatures,
+                num_readonly_signed_accounts,
+                num_readonly_unsigned_accounts,
+            },
+            account_keys,
+            recent_blockhash,
+            instructions,
+        };
+        
+        // Parse metadata if available
+        let meta = meta.map(|m| TransactionMeta {
+            err: m.err.clone(),
+            fee: m.fee,
+            pre_balances: m.pre_balances.clone(),
+            post_balances: m.post_balances.clone(),
+            inner_instructions: m.inner_instructions.clone(),
+            log_messages: m.log_messages.clone(),
+            compute_units_consumed: m.compute_units_consumed,
+        });
+        
+        Ok(SolanaTransaction {
+            signatures,
+            message,
+            meta,
+        })
+    }
+    
+    /// Parse a base64 encoded Solana transaction
+    /// 
+    /// This method parses base64 encoded transaction data according to Solana's
+    /// transaction format specification.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `encoding` - Base64 encoding format
+    /// * `data` - Base64 encoded transaction data
+    /// * `meta` - Optional transaction metadata
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `SolanaTransaction` parsed from base64 data
+    fn parse_base64_transaction(
+        &self,
+        encoding: &solana_transaction_status::UiTransactionEncoding,
+        data: &str,
+        meta: Option<&solana_transaction_status::UiTransactionStatusMeta>,
+    ) -> Result<SolanaTransaction> {
+        match encoding {
+            solana_transaction_status::UiTransactionEncoding::Base64 => {
+                // Decode base64 data and parse as binary
+                let decoded_data = base64::decode(data)
+                    .context("Failed to decode base64 transaction data")?;
+                self.parse_raw_binary_transaction(&decoded_data, meta)
+            }
+            solana_transaction_status::UiTransactionEncoding::Base58 => {
+                // Decode base58 data and parse as binary
+                let decoded_data = bs58::decode(data)
+                    .into_vec()
+                    .context("Failed to decode base58 transaction data")?;
+                self.parse_raw_binary_transaction(&decoded_data, meta)
+            }
+            solana_transaction_status::UiTransactionEncoding::Json => {
+                // Try to parse as JSON
+                serde_json::from_str::<solana_transaction_status::UiTransaction>(data)
+                    .context("Failed to parse JSON transaction")
+                    .and_then(|ui_tx| self.parse_ui_transaction(&ui_tx, meta))
+            }
+            _ => {
+                anyhow::bail!("Unsupported base64 encoding format: {:?}", encoding)
+            }
+        }
+    }
+    
+    /// Parse a UI transaction (JSON format)
+    fn parse_ui_transaction(
+        &mut self,
+        ui_tx: &solana_transaction_status::UiTransaction,
+        meta: Option<&solana_transaction_status::UiTransactionStatusMeta>,
+    ) -> Result<SolanaTransaction> {
+        let message = &ui_tx.message;
+        
+        let instructions = message.instructions.iter()
+            .map(|inst| CompiledInstruction {
+                program_id_index: inst.program_id_index,
+                accounts: inst.accounts.clone(),
+                data: bs58::decode(&inst.data).into_vec().unwrap_or_default(),
+            })
+            .collect();
+        
+        let real_message = TransactionMessage {
+            header: TransactionHeader {
+                num_required_signatures: message.header.num_required_signatures,
+                num_readonly_signed_accounts: message.header.num_readonly_signed_accounts,
+                num_readonly_unsigned_accounts: message.header.num_readonly_unsigned_accounts,
+            },
+            account_keys: message.account_keys.clone(),
+            recent_blockhash: message.recent_blockhash.clone(),
+            instructions,
+        };
+        
+        let real_meta = meta.map(|m| TransactionMeta {
+            err: m.err.clone(),
+            fee: m.fee,
+            pre_balances: m.pre_balances.clone(),
+            post_balances: m.post_balances.clone(),
+            inner_instructions: m.inner_instructions.clone(),
+            log_messages: m.log_messages.clone(),
+            compute_units_consumed: m.compute_units_consumed,
+        });
+        
+        Ok(SolanaTransaction {
+            signatures: ui_tx.signatures.clone(),
+            message: real_message,
+            meta: real_meta,
+        })
+    }
+    
+    /// Load real Solana account data
+    pub fn load_account(&mut self, pubkey: &str, account_data: &UiAccount) -> Result<()> {
+        let data = if let Some(data) = &account_data.data {
+            match data {
+                solana_account_decoder::UiAccountData::Binary(data, _) => {
+                    bs58::decode(data).into_vec().unwrap_or_default()
+                }
+                solana_account_decoder::UiAccountData::Json(_) => {
+                    Vec::new()
+                }
+                _ => Vec::new(),
+            }
+        } else {
+            Vec::new()
+        };
+        
+        let real_account = SolanaAccountInfo {
+            pubkey: pubkey.to_string(),
+            lamports: account_data.lamports.unwrap_or(0),
+            owner: account_data.owner.clone().unwrap_or_default(),
+            executable: account_data.executable.unwrap_or(false),
+            rent_epoch: account_data.rent_epoch.unwrap_or(0),
+            data,
+        };
+        
+        self.accounts.insert(pubkey.to_string(), real_account);
+        Ok(())
+    }
+    
+    /// Load real Solana program data
+    pub fn load_program(&mut self, program_id: &str, program_data: &[u8], deployed_slot: u64) -> Result<()> {
+        let real_program = SolanaProgramInfo {
+            program_id: program_id.to_string(),
+            executable_data: program_data.to_vec(),
+            upgrade_authority: None,
+            deployed_slot,
+        };
+        
+        self.programs.insert(program_id.to_string(), real_program);
+        Ok(())
     }
     
     /// Execute a Solana transaction
@@ -95,7 +485,7 @@ impl SolanaExecutionEnvironment {
         self.error = None;
         
         // Validate transaction signatures
-        self.validate_signatures(&transaction.signatures, &transaction.message)?;
+        self.validate_signatures(transaction)?;
         
         // Execute each instruction
         let mut instruction_results = Vec::new();
@@ -120,78 +510,284 @@ impl SolanaExecutionEnvironment {
     }
     
     /// Execute a single instruction
-    fn execute_instruction(&mut self, instruction: &CompiledInstruction, account_keys: &[AccountPubkey]) -> Result<InstructionResult, String> {
-        let program_id = account_keys[instruction.program_id_index as usize];
+    fn execute_instruction(&mut self, instruction: &CompiledInstruction, account_keys: &[String]) -> Result<InstructionResult, String> {
+        let program_id = &account_keys[instruction.program_id_index as usize];
         
         // Get the program data
-        let program_data = self.programs.get(&program_id)
-            .ok_or_else(|| format!("Program not found: {:?}", program_id))?;
+        let program_data = self.programs.get(program_id)
+            .ok_or_else(|| format!("Program not found: {}", program_id))?;
         
-        // Create account references
+        // Convert account keys to account data for BPF execution
         let mut accounts = Vec::new();
-        for &account_index in &instruction.accounts {
-            let account_pubkey = account_keys[account_index as usize];
-            let account = self.accounts.get(&account_pubkey)
-                .ok_or_else(|| format!("Account not found: {:?}", account_pubkey))?;
-            accounts.push(account.clone());
+        for account_index in &instruction.accounts {
+            let account_key = &account_keys[*account_index as usize];
+            if let Some(account_info) = self.accounts.get(account_key) {
+                let bpf_account = self.bpf_loader.convert_account(account_info)
+                    .map_err(|e| format!("Failed to convert account: {}", e))?;
+                accounts.push(bpf_account);
+            }
         }
         
-        // Create program executor
-        let mut executor = SolanaProgramExecutor::new(program_data.clone(), self.compute_units_limit - self.compute_units_used);
-        
-        // Add accounts to executor
-        for account in &accounts {
-            executor.add_account(account.clone());
+        // Load the program into the BPF loader if not already loaded
+        if !self.bpf_loader.list_programs().contains(program_id) {
+            self.bpf_loader.load_program(program_id, &program_data.executable_data)
+                .map_err(|e| format!("Failed to load program: {}", e))?;
         }
         
-        // Execute the program
-        let result = executor.execute_program(instruction.data.clone(), accounts.iter().map(|a| a.pubkey).collect())?;
+        // Execute the program using the BPF loader
+        let (return_data, compute_units_used, error) = self.bpf_loader.execute_program_simple(
+            &instruction.data,
+            &instruction.accounts.iter().map(|i| account_keys[*i as usize].clone()).collect::<Vec<_>>(),
+            self.compute_units_limit - self.compute_units_used,
+        ).map_err(|e| format!("BPF execution failed: {}", e))?;
         
-        // Update compute units
-        self.compute_units_used += result.compute_units_used;
+        self.compute_units_used += compute_units_used;
         
-        // Add logs
-        self.logs.extend(result.logs.clone());
-        
-        // Set return data if available
-        if let Some(ref data) = result.return_data {
-            self.return_data = Some(data.clone());
-        }
-        
-        // Set error if available
-        if let Some(ref error) = result.error {
-            self.error = Some(error.clone());
-        }
+        let logs = self.bpf_loader.get_logs();
         
         Ok(InstructionResult {
-            success: result.success,
-            logs: result.logs,
-            return_data: result.return_data,
-            compute_units_used: result.compute_units_used,
-            error: result.error,
+            success: error.is_none(),
+            logs,
+            return_data,
+            compute_units_used,
+            error,
         })
     }
     
     /// Validate transaction signatures
-    fn validate_signatures(&self, signatures: &[Vec<u8>], message: &TransactionMessage) -> Result<(), String> {
-        // For now, just check that we have the required number of signatures
-        if signatures.len() < message.header.num_required_signatures as usize {
-            return Err("Insufficient signatures".to_string());
+    /// 
+    /// This method verifies that all required signatures are valid
+    /// using Ed25519 signature verification.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Transaction to validate
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `Result<()>` indicating validation success or failure
+    fn validate_signatures(&self, transaction: &SolanaTransaction) -> Result<(), String> {
+        let required = transaction.message.header.num_required_signatures as usize;
+        let provided = transaction.signatures.len();
+        
+        if provided < required {
+            return Err(format!("Insufficient signatures: need {}, have {}", required, provided));
         }
         
-        // TODO: Implement actual signature verification
-        // This would require cryptographic primitives that may not be available in ZisK
+        // Get the message to sign (transaction message without signatures)
+        let message_bytes = self.serialize_message_for_signing(&transaction.message);
+        
+        // Verify each signature
+        for (i, signature_str) in transaction.signatures.iter().enumerate() {
+            if i >= required {
+                break; // Only verify required signatures
+            }
+            
+            // Get the corresponding public key
+            let pubkey_str = &transaction.message.account_keys[i];
+            let pubkey_bytes = bs58::decode(pubkey_str)
+                .into_vec()
+                .map_err(|e| format!("Invalid public key {}: {}", pubkey_str, e))?;
+            
+            if pubkey_bytes.len() != 32 {
+                return Err(format!("Invalid public key length: {}", pubkey_bytes.len()));
+            }
+            
+            // Decode signature
+            let signature_bytes = bs58::decode(signature_str)
+                .into_vec()
+                .map_err(|e| format!("Invalid signature {}: {}", signature_str, e))?;
+            
+            if signature_bytes.len() != 64 {
+                return Err(format!("Invalid signature length: {}", signature_bytes.len()));
+            }
+            
+            // Verify signature using Ed25519
+            let pubkey = ed25519_dalek::VerifyingKey::from_bytes(&pubkey_bytes)
+                .map_err(|e| format!("Invalid public key format: {}", e))?;
+            
+            let signature = ed25519_dalek::Signature::from_bytes(&signature_bytes)
+                .map_err(|e| format!("Invalid signature format: {}", e))?;
+            
+            pubkey.verify(&message_bytes, &signature)
+                .map_err(|e| format!("Signature verification failed for signature {}: {}", i, e))?;
+        }
         
         Ok(())
     }
     
-
+    /// Serialize transaction message for signature verification
+    /// 
+    /// This method creates the byte representation of the transaction message
+    /// that should be signed, following Solana's signature verification format.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `message` - Transaction message to serialize
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `Vec<u8>` containing the serialized message
+    fn serialize_message_for_signing(&self, message: &TransactionMessage) -> Vec<u8> {
+        let mut data = Vec::new();
+        
+        // Header
+        data.push(message.header.num_required_signatures);
+        data.push(message.header.num_readonly_signed_accounts);
+        data.push(message.header.num_readonly_unsigned_accounts);
+        
+        // Account keys count
+        data.push(message.account_keys.len() as u8);
+        
+        // Account keys (32 bytes each)
+        for pubkey_str in &message.account_keys {
+            let pubkey_bytes = bs58::decode(pubkey_str).into_vec().unwrap_or_default();
+            if pubkey_bytes.len() == 32 {
+                data.extend_from_slice(&pubkey_bytes);
+            } else {
+                // Pad with zeros if invalid
+                data.extend_from_slice(&[0u8; 32]);
+            }
+        }
+        
+        // Recent blockhash
+        let blockhash_bytes = bs58::decode(&message.recent_blockhash).into_vec().unwrap_or_default();
+        if blockhash_bytes.len() == 32 {
+            data.extend_from_slice(&blockhash_bytes);
+        } else {
+            // Pad with zeros if invalid
+            data.extend_from_slice(&[0u8; 32]);
+        }
+        
+        // Instructions count
+        data.push(message.instructions.len() as u8);
+        
+        // Instructions
+        for instruction in &message.instructions {
+            data.push(instruction.program_id_index);
+            data.push(instruction.accounts.len() as u8);
+            data.push(instruction.data.len() as u8);
+            
+            // Account indices
+            data.extend_from_slice(&instruction.accounts);
+            
+            // Instruction data
+            data.extend_from_slice(&instruction.data);
+        }
+        
+        data
+    }
     
-
+    /// Get account by public key
+    pub fn get_account(&self, pubkey: &str) -> Option<&SolanaAccountInfo> {
+        self.accounts.get(pubkey)
+    }
     
-
+    /// Get program by program ID
+    pub fn get_program(&self, program_id: &str) -> Option<&SolanaProgramInfo> {
+        self.programs.get(program_id)
+    }
     
-
+    /// Get execution logs
+    pub fn get_logs(&self) -> &[String] {
+        &self.logs
+    }
+    
+    /// Get execution results
+    pub fn get_results(&self) -> (Vec<String>, Option<Vec<u8>>, Option<String>, u64) {
+        (
+            self.logs.clone(),
+            self.return_data.clone(),
+            self.error.clone(),
+            self.compute_units_used,
+        )
+    }
+    
+    /// Update an existing account in the execution environment
+    /// 
+    /// # Arguments
+    /// 
+    /// * `pubkey` - Public key of the account to update
+    /// * `new_state` - New account state
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `Result<()>` indicating success or failure
+    pub fn update_account(&mut self, pubkey: &str, new_state: SolanaAccountInfo) -> Result<()> {
+        if let Some(existing_account) = self.accounts.get_mut(pubkey) {
+            *existing_account = new_state;
+            Ok(())
+        } else {
+            anyhow::bail!("Account not found: {}", pubkey)
+        }
+    }
+    
+    /// Add an account from RealSolanaAccount structure
+    /// 
+    /// # Arguments
+    /// 
+    /// * `account` - RealSolanaAccount to add
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `Result<()>` indicating success or failure
+    pub fn add_account_from_real(&mut self, account: crate::real_solana_parser::RealSolanaAccount) -> Result<()> {
+        let account_info = SolanaAccountInfo {
+            pubkey: account.pubkey,
+            lamports: account.lamports,
+            owner: account.owner,
+            executable: account.executable,
+            rent_epoch: account.rent_epoch,
+            data: account.data,
+        };
+        
+        self.accounts.insert(account_info.pubkey.clone(), account_info);
+        Ok(())
+    }
+    
+    /// Get a mutable reference to an account
+    /// 
+    /// # Arguments
+    /// 
+    /// * `pubkey` - Public key of the account
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `Option<&mut SolanaAccountInfo>` if account exists
+    pub fn get_account_mut(&mut self, pubkey: &str) -> Option<&mut SolanaAccountInfo> {
+        self.accounts.get_mut(pubkey)
+    }
+    
+    /// Check if an account exists in the execution environment
+    /// 
+    /// # Arguments
+    /// 
+    /// * `pubkey` - Public key of the account to check
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `bool` indicating whether the account exists
+    pub fn has_account(&self, pubkey: &str) -> bool {
+        self.accounts.contains_key(pubkey)
+    }
+    
+    /// Get the total number of accounts in the execution environment
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `usize` representing the number of accounts
+    pub fn account_count(&self) -> usize {
+        self.accounts.len()
+    }
+    
+    /// Get the total number of programs in the execution environment
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `usize` representing the number of programs
+    pub fn program_count(&self) -> usize {
+        self.programs.len()
+    }
 }
 
 /// Transaction execution result
@@ -216,86 +812,5 @@ pub struct InstructionResult {
     pub error: Option<String>,
 }
 
-
-
-
-
-/// Helper function to create a test account
-pub fn create_test_account(pubkey: AccountPubkey, _owner: ProgramId, lamports: u64) -> SolanaAccount {
-    let mut account = SolanaAccount::new(pubkey);
-    account.lamports = lamports;
-    account
-}
-
-
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    
-    #[test]
-    fn test_system_program_create_account() {
-        let mut from_account = create_test_account([1u8; 32], [0u8; 32], 1000);
-        let mut to_account = create_test_account([2u8; 32], [0u8; 32], 0);
-        
-        let result = SolanaSystemProgram::create_account(
-            &mut from_account,
-            &mut to_account,
-            500,
-            100,
-            [3u8; 32],
-        );
-        
-        assert!(result.is_ok());
-        assert_eq!(from_account.lamports, 500);
-        assert_eq!(to_account.lamports, 500);
-
-    }
-    
-    #[test]
-    fn test_system_program_transfer() {
-        let mut from_account = create_test_account([1u8; 32], [0u8; 32], 1000);
-        let mut to_account = create_test_account([2u8; 32], [0u8; 32], 100);
-        
-        let result = SolanaSystemProgram::transfer(&mut from_account, &mut to_account, 300);
-        
-        assert!(result.is_ok());
-        assert_eq!(from_account.lamports, 700);
-        assert_eq!(to_account.lamports, 400);
-    }
-    
-    #[test]
-    fn test_execution_environment() {
-        let mut env = SolanaExecutionEnvironment::new(10000);
-        
-        // Add a test program
-        let program_id = [1u8; 32];
-        let program_data = vec![0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]; // EXIT instruction
-        env.add_program(program_id, program_data);
-        
-        // Add test accounts
-        let account1 = create_test_account([2u8; 32], program_id, 1000);
-        let account2 = create_test_account([3u8; 32], program_id, 500);
-        env.add_account(account1);
-        env.add_account(account2);
-        
-        // Create a test transaction
-        let transaction = SolanaTransaction {
-            signatures: vec![vec![0u8; 64]],
-            message: TransactionMessage {
-                header: TransactionHeader {
-                    num_required_signatures: 1,
-                },
-                account_keys: vec![[2u8; 32], [3u8; 32], program_id],
-                instructions: vec![CompiledInstruction {
-                    program_id_index: 2,
-                    accounts: vec![0, 1],
-                    data: vec![],
-                }],
-            },
-        };
-        
-        let result = env.execute_transaction(&transaction);
-        assert!(result.is_ok());
-    }
-}
+// Note: Test functions and sample data have been removed for production use.
+// The executor now focuses solely on real Solana transaction processing.

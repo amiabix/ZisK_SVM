@@ -1,20 +1,16 @@
-// ZisK-compatible getrandom implementation
-use getrandom::register_custom_getrandom;
-
-// Custom random number generator for ZisK zkVM
-fn custom_getrandom(dest: &mut [u8]) -> Result<(), getrandom::Error> {
-    // For ZisK zkVM, we'll use a simple deterministic "random" generator
-    // In production, you'd want to use ZisK's built-in randomness or external entropy
+// Custom random number generator implementation
+fn custom_getrandom(dest: &mut [u8]) -> Result<(), Box<dyn std::error::Error>> {
+    // Simple deterministic "random" generator
     for (i, byte) in dest.iter_mut().enumerate() {
         *byte = ((i * 7 + 13) % 256) as u8;
     }
     Ok(())
 }
 
-// Register our custom implementation
-register_custom_getrandom!(custom_getrandom);
-
-// Export the main modules for ZisK integration
+// Export the main modules
 pub mod constants;
 pub mod bpf_interpreter;
 pub mod solana_executor;
+pub mod real_bpf_loader;
+pub mod real_solana_parser;
+pub mod real_account_loader;

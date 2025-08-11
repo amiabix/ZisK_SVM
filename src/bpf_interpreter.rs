@@ -155,19 +155,104 @@ pub enum BpfOpcode {
     SolReturn = 0xE2, // Solana return data
 }
 
-/// Solana Account State
+/// Solana Account Structure
+/// 
+/// Represents a complete Solana account with all required fields
+/// for production use and BPF program execution.
 #[derive(Debug, Clone)]
 pub struct SolanaAccount {
+    /// Account public key (32 bytes)
     pub pubkey: [u8; 32],
+    /// Account balance in lamports
     pub lamports: u64,
+    /// Account owner (program ID that owns this account)
+    pub owner: [u8; 32],
+    /// Whether this account is executable (program account)
+    pub executable: bool,
+    /// Rent epoch for this account
+    pub rent_epoch: u64,
+    /// Account data (program-specific data)
+    pub data: Vec<u8>,
 }
 
 impl SolanaAccount {
+    /// Create a new Solana account with default values
+    /// 
+    /// # Arguments
+    /// 
+    /// * `pubkey` - Account public key
+    /// 
+    /// # Returns
+    /// 
+    /// Returns a new SolanaAccount with default values
     pub fn new(pubkey: [u8; 32]) -> Self {
         Self {
             pubkey,
             lamports: 0,
+            owner: [0u8; 32], // Default to system program
+            executable: false,
+            rent_epoch: 0,
+            data: Vec::new(),
         }
+    }
+    
+    /// Create a new Solana account with all fields specified
+    /// 
+    /// # Arguments
+    /// 
+    /// * `pubkey` - Account public key
+    /// * `lamports` - Account balance in lamports
+    /// * `owner` - Account owner program ID
+    /// * `executable` - Whether account is executable
+    /// * `rent_epoch` - Rent epoch
+    /// * `data` - Account data
+    /// 
+    /// # Returns
+    /// 
+    /// Returns a new SolanaAccount with specified values
+    pub fn new_with_data(
+        pubkey: [u8; 32],
+        lamports: u64,
+        owner: [u8; 32],
+        executable: bool,
+        rent_epoch: u64,
+        data: Vec<u8>,
+    ) -> Self {
+        Self {
+            pubkey,
+            lamports,
+            owner,
+            executable,
+            rent_epoch,
+            data,
+        }
+    }
+    
+    /// Check if this account is owned by the system program
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `true` if owned by system program (all zeros)
+    pub fn is_system_owned(&self) -> bool {
+        self.owner == [0u8; 32]
+    }
+    
+    /// Check if this account is a program account
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `true` if account is executable
+    pub fn is_program(&self) -> bool {
+        self.executable
+    }
+    
+    /// Get account data size
+    /// 
+    /// # Returns
+    /// 
+    /// Returns the size of account data in bytes
+    pub fn data_size(&self) -> usize {
+        self.data.len()
     }
 }
 
