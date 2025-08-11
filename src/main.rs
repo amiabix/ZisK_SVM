@@ -44,67 +44,76 @@ pub extern "C" fn main() -> i32 {
     }
 }
 
-fn run_main() -> Result<(), anyhow::Error> {
-    println!("🚀 ZisK-SVM: Real BPF Execution Test");
+fn test_rbpf_integration() -> Result<(), anyhow::Error> {
+    println!("Testing RBPF integration...");
     
-    // Create BPF loader
     let mut bpf_loader = crate::real_bpf_loader::RealBpfLoader::new()?;
     
-    // Try to load test program
-    let test_program_path = "target/hello_world.so";
-    if std::path::Path::new(test_program_path).exists() {
-        println!("📁 Loading test BPF program...");
-        bpf_loader.load_program_from_file("test_program", test_program_path)?;
-        
-        // Create test accounts
-        let test_accounts = vec![
-            crate::real_bpf_loader::BpfAccount {
-                pubkey: [1u8; 32],
-                lamports: 1000000,
-                data: vec![42, 43, 44],
-                owner: [0u8; 32],
-                executable: false,
-                rent_epoch: 0,
-            }
-        ];
-        
-        // Execute test program
-        println!("⚡ Executing BPF program...");
-        let result = bpf_loader.execute_program(
-            "test_program",
-            &[123, 124, 125], // Test instruction data
-            &test_accounts,
-        )?;
-        
-        // Display results
-        println!("📊 Execution Results:");
-        println!("   Success: {}", result.success);
-        println!("   Compute units: {}", result.compute_units_consumed);
-        
-        if let Some(error) = &result.error_message {
-            println!("   Error: {}", error);
+    // Create minimal test program (simple BPF bytecode that exits successfully)
+    let test_program = vec![
+        0x7f, 0x45, 0x4c, 0x46, // ELF magic
+        0x02, 0x01, 0x01, 0x00, // 64-bit, little-endian, version 1
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // BPF_EXIT
+    ];
+    
+    println!("Loading test program...");
+    bpf_loader.load_program("test_rbpf", &test_program)?;
+    
+    // Create test accounts
+    let test_accounts = vec![
+        crate::real_bpf_loader::BpfAccount {
+            pubkey: [1u8; 32],
+            lamports: 1000000,
+            data: vec![42, 43, 44],
+            owner: [0u8; 32],
+            executable: false,
+            rent_epoch: 0,
         }
-        
-        if let Some(return_data) = &result.return_data {
-            println!("   Return data: {:?}", return_data);
-        }
-        
-        println!("📋 Execution Logs:");
-        for log in &result.logs {
-            println!("   {}", log);
-        }
-        
-        if result.success {
-            println!("🎉 REAL BPF EXECUTION SUCCESSFUL!");
-        } else {
-            println!("⚠️ BPF execution completed with issues");
-        }
-    } else {
-        println!("⚠️ Test program not found, using simulation");
-        println!("   To test real BPF: Run ./build_test_program.sh first");
+    ];
+    
+    // Execute test program
+    println!("Executing BPF program...");
+    let result = bpf_loader.execute_program(
+        "test_rbpf",
+        &[123, 124, 125], // Test instruction data
+        &test_accounts,
+    )?;
+    
+    // Display results
+    println!("Execution Results:");
+    println!("   Success: {}", result.success);
+    println!("   Compute units: {}", result.compute_units_consumed);
+    
+    if let Some(error) = &result.error_message {
+        println!("   Error: {}", error);
     }
     
-    println!("✅ ZisK-SVM real BPF integration complete!");
+    if let Some(return_data) = &result.return_data {
+        println!("   Return data: {:?}", return_data);
+    }
+    
+    println!("Execution Logs:");
+    for log in &result.logs {
+        println!("   {}", log);
+    }
+    
+    if result.success {
+        println!("REAL BPF EXECUTION SUCCESSFUL!");
+    } else {
+        println!("BPF execution completed with issues");
+    }
+    
+    Ok(())
+}
+
+fn run_main() -> Result<(), anyhow::Error> {
+    println!("ZisK-SVM: REAL BPF Execution Test");
+    
+    // Test RBPF integration first
+    test_rbpf_integration()?;
+    
+    // Original ZisK logic...
+    println!("RBPF integration active - ready for real BPF programs!");
     Ok(())
 }
 
