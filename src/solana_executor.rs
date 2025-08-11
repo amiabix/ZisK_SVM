@@ -21,8 +21,10 @@ use solana_sdk::{
     signature::Signature,
     signer::Signer,
 };
+use ed25519_dalek::{VerifyingKey, Verifier};
 use solana_transaction_status::{
     EncodedConfirmedTransactionWithStatusMeta,
+    EncodedTransactionWithStatusMeta,
     EncodedTransaction,
     UiTransactionEncoding,
 };
@@ -129,24 +131,23 @@ impl SolanaExecutionEnvironment {
         let transaction: EncodedConfirmedTransactionWithStatusMeta = serde_json::from_str(json_data)
             .context("Failed to parse transaction JSON")?;
         
-        self.parse_encoded_transaction(&transaction.transaction, transaction.meta.as_ref())
+        self.parse_encoded_transaction(&transaction.transaction, transaction.transaction.meta.as_ref())
     }
     
     /// Parse an encoded Solana transaction
-    pub fn parse_encoded_transaction(
+    pub     fn parse_encoded_transaction(
         &mut self,
-        encoded_tx: &EncodedTransaction,
+        encoded_tx: &EncodedTransactionWithStatusMeta,
         meta: Option<&solana_transaction_status::UiTransactionStatusMeta>,
     ) -> Result<SolanaTransaction> {
-        match encoded_tx {
-            EncodedTransaction::Json(ui_transaction) => {
+        // EncodedTransactionWithStatusMeta is a struct, not an enum
+        // Access the transaction field directly
+        match &encoded_tx.transaction {
+            solana_transaction_status::EncodedTransaction::Json(ui_transaction) => {
                 self.parse_ui_transaction(ui_transaction, meta)
             }
-            EncodedTransaction::Binary(encoding, data) => {
+            solana_transaction_status::EncodedTransaction::Binary(encoding, data) => {
                 self.parse_binary_transaction(encoding, data, meta)
-            }
-            EncodedTransaction::Base64(encoding, data) => {
-                self.parse_base64_transaction(encoding, data, meta)
             }
         }
     }
@@ -328,13 +329,17 @@ impl SolanaExecutionEnvironment {
         
         // Parse metadata if available
         let meta = meta.map(|m| TransactionMeta {
-            err: m.err.clone(),
+            err: m.err.as_ref().map(|e| serde_json::to_value(e).unwrap_or_default()),
             fee: m.fee,
             pre_balances: m.pre_balances.clone(),
             post_balances: m.post_balances.clone(),
-            inner_instructions: m.inner_instructions.clone(),
-            log_messages: m.log_messages.clone(),
-            compute_units_consumed: m.compute_units_consumed,
+            inner_instructions: m.inner_instructions.as_ref().map(|inner| {
+                inner.iter().map(|inst| serde_json::to_value(inst).unwrap_or_default()).collect()
+            }),
+            log_messages: m.log_messages.as_ref().map(|logs| {
+                logs.iter().map(|log| log.to_string()).collect()
+            }),
+            compute_units_consumed: m.compute_units_consumed.into(),
         });
         
         Ok(SolanaTransaction {
@@ -359,7 +364,7 @@ impl SolanaExecutionEnvironment {
     /// 
     /// Returns `SolanaTransaction` parsed from base64 data
     fn parse_base64_transaction(
-        &self,
+        &mut self,
         encoding: &solana_transaction_status::UiTransactionEncoding,
         data: &str,
         meta: Option<&solana_transaction_status::UiTransactionStatusMeta>,
@@ -396,9 +401,8 @@ impl SolanaExecutionEnvironment {
         ui_tx: &solana_transaction_status::UiTransaction,
         meta: Option<&solana_transaction_status::UiTransactionStatusMeta>,
     ) -> Result<SolanaTransaction> {
-        let message = &ui_tx.message;
-        
-        let instructions = message.instructions.iter()
+        // Handle the new UiTransaction structure - fields are now directly accessible
+        let instructions = ui_tx.instructions.iter()
             .map(|inst| CompiledInstruction {
                 program_id_index: inst.program_id_index,
                 accounts: inst.accounts.clone(),
@@ -408,23 +412,27 @@ impl SolanaExecutionEnvironment {
         
         let real_message = TransactionMessage {
             header: TransactionHeader {
-                num_required_signatures: message.header.num_required_signatures,
-                num_readonly_signed_accounts: message.header.num_readonly_signed_accounts,
-                num_readonly_unsigned_accounts: message.header.num_readonly_unsigned_accounts,
+                num_required_signatures: ui_tx.header.num_required_signatures,
+                num_readonly_signed_accounts: ui_tx.header.num_readonly_signed_accounts,
+                num_readonly_unsigned_accounts: ui_tx.header.num_readonly_unsigned_accounts,
             },
-            account_keys: message.account_keys.clone(),
-            recent_blockhash: message.recent_blockhash.clone(),
+            account_keys: ui_tx.account_keys.clone(),
+            recent_blockhash: ui_tx.recent_blockhash.clone(),
             instructions,
         };
         
         let real_meta = meta.map(|m| TransactionMeta {
-            err: m.err.clone(),
+            err: m.err.as_ref().map(|e| serde_json::to_value(e).unwrap_or_default()),
             fee: m.fee,
             pre_balances: m.pre_balances.clone(),
             post_balances: m.post_balances.clone(),
-            inner_instructions: m.inner_instructions.clone(),
-            log_messages: m.log_messages.clone(),
-            compute_units_consumed: m.compute_units_consumed,
+            inner_instructions: m.inner_instructions.as_ref().map(|inner| {
+                inner.iter().map(|inst| serde_json::to_value(inst).unwrap_or_default()).collect()
+            }),
+            log_messages: m.log_messages.as_ref().map(|logs| {
+                logs.iter().map(|log| log.to_string()).collect()
+            }),
+            compute_units_consumed: m.compute_units_consumed.into(),
         });
         
         Ok(SolanaTransaction {
@@ -436,26 +444,22 @@ impl SolanaExecutionEnvironment {
     
     /// Load real Solana account data
     pub fn load_account(&mut self, pubkey: &str, account_data: &UiAccount) -> Result<()> {
-        let data = if let Some(data) = &account_data.data {
-            match data {
-                solana_account_decoder::UiAccountData::Binary(data, _) => {
-                    bs58::decode(data).into_vec().unwrap_or_default()
-                }
-                solana_account_decoder::UiAccountData::Json(_) => {
-                    Vec::new()
-                }
-                _ => Vec::new(),
+        let data = match &account_data.data {
+            solana_account_decoder::UiAccountData::Binary(data, _) => {
+                bs58::decode(data).into_vec().unwrap_or_default()
             }
-        } else {
-            Vec::new()
+            solana_account_decoder::UiAccountData::Json(_) => {
+                Vec::new()
+            }
+            _ => Vec::new(),
         };
         
         let real_account = SolanaAccountInfo {
             pubkey: pubkey.to_string(),
-            lamports: account_data.lamports.unwrap_or(0),
-            owner: account_data.owner.clone().unwrap_or_default(),
-            executable: account_data.executable.unwrap_or(false),
-            rent_epoch: account_data.rent_epoch.unwrap_or(0),
+            lamports: account_data.lamports,
+            owner: account_data.owner.clone(),
+            executable: account_data.executable,
+            rent_epoch: account_data.rent_epoch,
             data,
         };
         
@@ -603,11 +607,14 @@ impl SolanaExecutionEnvironment {
             }
             
             // Verify signature using Ed25519
-            let pubkey = ed25519_dalek::VerifyingKey::from_bytes(&pubkey_bytes)
+            let pubkey_bytes_array: [u8; 32] = pubkey_bytes.try_into()
+                .map_err(|_| "Invalid public key length".to_string())?;
+            let pubkey = ed25519_dalek::VerifyingKey::from_bytes(&pubkey_bytes_array)
                 .map_err(|e| format!("Invalid public key format: {}", e))?;
             
-            let signature = ed25519_dalek::Signature::from_bytes(&signature_bytes)
-                .map_err(|e| format!("Invalid signature format: {}", e))?;
+            let signature_bytes_array: [u8; 64] = signature_bytes.try_into()
+                .map_err(|_| "Invalid signature length".to_string())?;
+            let signature = ed25519_dalek::Signature::from_bytes(&signature_bytes_array);
             
             pubkey.verify(&message_bytes, &signature)
                 .map_err(|e| format!("Signature verification failed for signature {}: {}", i, e))?;
