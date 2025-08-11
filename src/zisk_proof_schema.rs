@@ -10,6 +10,7 @@ use anyhow::{Result, anyhow};
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use solana_sdk::pubkey::Pubkey;
+use std::str::FromStr;
 
 /// Input to ZisK proving system for Solana transaction execution
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -432,14 +433,18 @@ impl SchemaConverter {
         let encoded_transaction = EncodedTransaction {
             signatures: transaction.signatures.clone(),
             message: TransactionMessage {
-                header: transaction.message.header.clone(),
+                header: MessageHeader {
+                    num_required_signatures: transaction.message.header.num_required_signatures,
+                    num_readonly_signed_accounts: transaction.message.header.num_readonly_signed_accounts,
+                    num_readonly_unsigned_accounts: transaction.message.header.num_readonly_unsigned_accounts,
+                },
                 account_keys: transaction.message.account_keys.clone(),
                 recent_blockhash: transaction.message.recent_blockhash.clone(),
                 instructions: transaction.message.instructions.iter()
                     .map(|inst| CompiledInstruction {
                         program_id_index: inst.program_id_index,
                         accounts: inst.accounts.clone(),
-                        data: bs58::decode(&inst.data).unwrap_or_default(),
+                        data: bs58::decode(&inst.data).into_vec().unwrap_or_default(),
                     })
                     .collect(),
             },
@@ -487,8 +492,8 @@ impl SchemaConverter {
         rent_exempt_reserve: u64,
     ) -> AccountState {
         AccountState {
-            pubkey: pubkey.to_string(),
-            owner: bs58::encode(account.owner).into_string(),
+            pubkey: solana_sdk::pubkey::Pubkey::from_str(pubkey).unwrap_or_default(),
+            owner: solana_sdk::pubkey::Pubkey::new_from_array(account.owner),
             lamports: account.lamports,
             executable: account.executable,
             rent_epoch: account.rent_epoch,
@@ -553,7 +558,7 @@ mod tests {
             transaction: EncodedTransaction {
                 signatures: vec!["signature1".to_string()],
                 message: TransactionMessage {
-                    header: TransactionHeader {
+                    header: MessageHeader {
                         num_required_signatures: 1,
                         num_readonly_signed_accounts: 0,
                         num_readonly_unsigned_accounts: 0,
@@ -569,6 +574,7 @@ mod tests {
                 meta: None,
             },
             account_states: vec![AccountState {
+            rent_exempt_reserve: 0,
                 pubkey: "account1".to_string(),
                 owner: "owner1".to_string(),
                 lamports: 1000,

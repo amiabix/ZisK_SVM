@@ -229,7 +229,7 @@ impl<'a> SafeAccountAccess<'a> {
     }
 
     /// Read u64 value from account data
-    pub fn read_u64(&self, offset: usize) -> Result<u64, ZisKError> {
+    pub fn read_u64(&mut self, offset: usize) -> Result<u64, ZisKError> {
         if offset + 8 > self.data.len() {
             return Err(ZisKError::AccountDataBoundsError);
         }
@@ -272,7 +272,7 @@ impl<'a> SafeAccountAccess<'a> {
     }
 
     /// Read bytes from account data
-    pub fn read_bytes(&self, offset: usize, length: usize) -> Result<&[u8], ZisKError> {
+    pub fn read_bytes(&mut self, offset: usize, length: usize) -> Result<&[u8], ZisKError> {
         if offset + length > self.data.len() {
             return Err(ZisKError::AccountDataBoundsError);
         }

@@ -221,12 +221,12 @@ impl ZisKCpiContext {
         for account in account_infos {
             // Check if account is already borrowed
             if self.borrowed_accounts.contains_key(&account.key) {
-                return Err(anyhow!("Account {} is already borrowed", bs58::encode(account.key)));
+                return Err(anyhow!("Account {} is already borrowed", bs58::encode(account.key).into_string()));
             }
 
             // Validate account permissions
             if account.is_writable && !self.can_write_account(account)? {
-                return Err(anyhow!("Cannot write to account {}", bs58::encode(account.key)));
+                return Err(anyhow!("Cannot write to account {}", bs58::encode(account.key).into_string()));
             }
         }
         Ok(())
@@ -320,7 +320,7 @@ impl ZisKCpiContext {
         &mut self,
         account_infos: &[&AccountInfo],
         bpf_context: &BpfExecutionContext,
-    ) {
+    ) -> Result<(), Box<dyn std::error::Error>> {
         for (i, account_info) in account_infos.iter().enumerate() {
             if let Some(updated_account) = bpf_context.accounts.get(i) {
                 // Update the borrowed account
@@ -329,6 +329,7 @@ impl ZisKCpiContext {
                 }
             }
         }
+        Ok(())
     }
 
     /// Update account states after execution
@@ -386,7 +387,7 @@ impl ProgramRegistry {
         self.programs
             .get(program_id)
             .cloned()
-            .ok_or_else(|| anyhow!("Program {} not found", bs58::encode(program_id)))
+            .ok_or_else(|| anyhow!("Program {} not found", bs58::encode(program_id).into_string()))
     }
 
     fn register_program(&mut self, program_id: [u8; 32], program_data: Vec<u8>) {
@@ -409,7 +410,8 @@ pub mod pda {
 
         loop {
             let mut seeds_with_bump = seeds.to_vec();
-            seeds_with_bump.push(&[bump_seed]);
+            let bump_seed_slice = [bump_seed];
+            seeds_with_bump.push(&bump_seed_slice);
 
             if let Ok(addr) = try_find_program_address(&seeds_with_bump, program_id) {
                 address = addr;

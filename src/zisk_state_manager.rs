@@ -65,7 +65,7 @@ impl ZisKTransactionContext {
         transaction_signature: String,
         compute_budget: u64,
     ) -> Self {
-        let account_snapshots = accounts
+        let account_snapshots: HashMap<String, AccountSnapshot> = accounts
             .iter()
             .map(|(pubkey, account)| (pubkey.clone(), AccountSnapshot::from(account)))
             .collect();
@@ -149,12 +149,13 @@ impl ZisKTransactionContext {
         self.current_accounts.clear();
         for (pubkey, snapshot) in &self.account_snapshots {
             self.current_accounts.insert(pubkey.clone(), AccountState {
-                pubkey: pubkey.clone(),
+                pubkey: solana_sdk::pubkey::Pubkey::from_str(&pubkey).unwrap_or_default(),
                 lamports: snapshot.lamports,
                 data: snapshot.data.clone(),
                 owner: snapshot.owner.clone(),
                 executable: snapshot.executable,
                 rent_epoch: snapshot.rent_epoch,
+                rent_exempt_reserve: 0,
             });
         }
 
@@ -397,7 +398,9 @@ pub struct ZisKStateUtilities;
 impl ZisKStateUtilities {
     /// Create account state from snapshot
     pub fn account_from_snapshot(pubkey: String, snapshot: &AccountSnapshot) -> AccountState {
+            rent_exempt_reserve: 0,
         AccountState {
+            rent_exempt_reserve: 0,
             pubkey,
             lamports: snapshot.lamports,
             data: snapshot.data.clone(),
@@ -445,6 +448,7 @@ mod tests {
     #[test]
     fn test_account_snapshot_creation() {
         let account = AccountState {
+            rent_exempt_reserve: 0,
             pubkey: solana_sdk::pubkey::Pubkey::new_unique(),
             lamports: 1000,
             data: vec![1, 2, 3],
@@ -465,6 +469,7 @@ mod tests {
     fn test_transaction_context_creation() {
         let mut accounts = HashMap::new();
         accounts.insert("account1".to_string(), AccountState {
+            rent_exempt_reserve: 0,
             pubkey: "account1".to_string(),
             lamports: 1000,
             data: vec![],
@@ -489,6 +494,7 @@ mod tests {
     fn test_checkpoint_creation_and_rollback() {
         let mut accounts = HashMap::new();
         accounts.insert("account1".to_string(), AccountState {
+            rent_exempt_reserve: 0,
             pubkey: "account1".to_string(),
             lamports: 1000,
             data: vec![],
@@ -522,6 +528,7 @@ mod tests {
     fn test_compute_budget_tracking() {
         let mut accounts = HashMap::new();
         accounts.insert("account1".to_string(), AccountState {
+            rent_exempt_reserve: 0,
             pubkey: "account1".to_string(),
             lamports: 1000,
             data: vec![],
@@ -550,6 +557,7 @@ mod tests {
     fn test_transaction_finalization() {
         let mut accounts = HashMap::new();
         accounts.insert("account1".to_string(), AccountState {
+            rent_exempt_reserve: 0,
             pubkey: "account1".to_string(),
             lamports: 1000,
             data: vec![],

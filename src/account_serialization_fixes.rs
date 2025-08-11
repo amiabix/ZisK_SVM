@@ -21,7 +21,9 @@ impl ZisKAccountSerializer {
         pubkey: &Pubkey,
         account: &Account,
     ) -> AccountState {
+            rent_exempt_reserve: 0,
         AccountState {
+            rent_exempt_reserve: 0,
             pubkey: *pubkey,
             lamports: account.lamports,
             data: account.data.clone(),
@@ -68,6 +70,7 @@ impl ZisKAccountSerializer {
         let rent_epoch = Self::extract_u64_field(account_json, "rentEpoch", 0)?;
 
         Ok(AccountState {
+            rent_exempt_reserve: 0,
             pubkey,
             lamports,
             data,
@@ -334,6 +337,7 @@ mod tests {
     #[test]
     fn test_zisk_account_to_solana() {
         let zisk_account = AccountState {
+            rent_exempt_reserve: 0,
             pubkey: Pubkey::new_unique(),
             lamports: 2000,
             data: vec![4, 5, 6],
@@ -369,6 +373,7 @@ mod tests {
     #[test]
     fn test_validate_account_state() {
         let valid_account = AccountState {
+            rent_exempt_reserve: 0,
             pubkey: Pubkey::new_unique(),
             lamports: 1000000, // Sufficient for rent exemption
             data: vec![0; 100],

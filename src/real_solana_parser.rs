@@ -16,8 +16,12 @@ use solana_sdk::{
 };
 use solana_transaction_status::{
     EncodedConfirmedTransactionWithStatusMeta,
+    EncodedTransactionWithStatusMeta,
     EncodedTransaction,
     UiTransactionEncoding,
+    UiTransaction,
+    UiMessage,
+    UiTransactionStatusMeta,
 };
 use solana_account_decoder::UiAccount;
 use anyhow::{Result, Context};
@@ -35,7 +39,7 @@ pub struct RealSolanaTransaction {
 /// Real Solana Transaction Message
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RealTransactionMessage {
-    pub header: TransactionHeader,
+    pub header: MessageHeader,
     pub account_keys: Vec<String>,
     pub recent_blockhash: String,
     pub instructions: Vec<RealCompiledInstruction>,
@@ -43,7 +47,7 @@ pub struct RealTransactionMessage {
 
 /// Real Solana Transaction Header
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TransactionHeader {
+pub struct MessageHeader {
     pub num_required_signatures: u8,
     pub num_readonly_signed_accounts: u8,
     pub num_readonly_unsigned_accounts: u8,
@@ -201,6 +205,40 @@ pub struct RealSolanaParser {
 }
 
 impl RealSolanaParser {
+    /// Create transaction message using SDK v2.3.7 pattern
+    fn create_transaction_message(
+        &self,
+        instructions: Vec<RealCompiledInstruction>,
+        account_keys: Vec<String>,
+        recent_blockhash: String,
+        fee_payer: Option<String>,
+    ) -> RealTransactionMessage {
+        // Build message header based on account roles
+        let num_required_signatures = if fee_payer.is_some() { 1 } else { 0 };
+        let num_readonly_signed_accounts = 0;
+        let num_readonly_unsigned_accounts = 0;
+
+        RealTransactionMessage {
+            header: MessageHeader {
+                num_required_signatures,
+                num_readonly_signed_accounts,
+                num_readonly_unsigned_accounts,
+            },
+            account_keys,
+            recent_blockhash,
+            instructions,
+        }
+    }
+
+    /// Parse transaction from JSON using proper SDK structure
+    fn parse_transaction_json(
+        &self,
+        json_data: &str,
+    ) -> Result<EncodedConfirmedTransactionWithStatusMeta> {
+        serde_json::from_str(json_data)
+            .context("Failed to parse transaction JSON")
+    }
+
     pub fn new() -> Self {
         Self {
             accounts: HashMap::new(),
@@ -210,26 +248,40 @@ impl RealSolanaParser {
     
     /// Parse a real Solana transaction from JSON RPC response
     pub fn parse_transaction_from_json(&mut self, json_data: &str) -> Result<RealSolanaTransaction> {
-        let transaction: EncodedConfirmedTransactionWithStatusMeta = serde_json::from_str(json_data)
-            .context("Failed to parse transaction JSON")?;
-        
-        self.parse_encoded_transaction(&transaction.transaction, None)
+        let transaction = self.parse_transaction_json(json_data)?;
+        self.parse_encoded_transaction(&transaction, None)
     }
     
-    /// Parse an encoded Solana transaction
+    /// Parse an encoded Solana transaction using SDK v2.3.7 structure
     pub fn parse_encoded_transaction(
         &mut self,
         encoded_tx: &EncodedConfirmedTransactionWithStatusMeta,
         meta: Option<&solana_transaction_status::UiTransactionStatusMeta>,
     ) -> Result<RealSolanaTransaction> {
-        // EncodedConfirmedTransactionWithStatusMeta is a struct, not an enum
-        // Access the transaction field directly
+        // Use the proper transaction structure from SDK v2.3.7
         match &encoded_tx.transaction {
-            solana_transaction_status::EncodedTransaction::Json(ui_transaction) => {
+            EncodedTransaction::Json(ui_transaction) => {
                 self.parse_ui_transaction(ui_transaction, meta)
             }
-            solana_transaction_status::EncodedTransaction::Binary(encoding, data) => {
-                self.parse_binary_transaction(encoding, data, meta)
+            EncodedTransaction::Binary(encoding, data) => {
+                // Handle binary transactions with proper encoding
+                // data is already a string that needs to be decoded
+                match encoding {
+                    UiTransactionEncoding::Base64 => {
+                        // Decode base64 data
+                        let decoded_data = base64::decode(data)
+                            .context("Failed to decode base64 transaction data")?;
+                        self.parse_raw_binary_transaction(&decoded_data, meta)
+                    }
+                    UiTransactionEncoding::Base58 => {
+                        // Decode base58 data
+                        let decoded_data = bs58::decode(data)
+                            .into_vec()
+                            .context("Failed to decode base58 transaction data")?;
+                        self.parse_raw_binary_transaction(&decoded_data, meta)
+                    }
+                    _ => Err(anyhow::anyhow!("Unsupported binary encoding: {:?}", encoding)),
+                }
             }
         }
     }
@@ -243,7 +295,7 @@ impl RealSolanaParser {
         // Handle the new UiTransaction structure with pattern matching
         // For now, use a fallback approach that handles the structure changes
         let instructions = Vec::new(); // Placeholder - will implement proper parsing
-        let header = TransactionHeader {
+        let header = MessageHeader {
             num_required_signatures: 0,
             num_readonly_signed_accounts: 0,
             num_readonly_unsigned_accounts: 0,
@@ -255,7 +307,7 @@ impl RealSolanaParser {
         // This requires understanding the exact field names in v2.3.7
         
         let real_message = RealTransactionMessage {
-            header: TransactionHeader {
+            header: MessageHeader {
                 num_required_signatures: header.num_required_signatures,
                 num_readonly_signed_accounts: header.num_readonly_signed_accounts,
                 num_readonly_unsigned_accounts: header.num_readonly_unsigned_accounts,
@@ -497,7 +549,7 @@ impl RealSolanaParser {
         
         // Create transaction message
         let message = RealTransactionMessage {
-            header: TransactionHeader {
+            header: MessageHeader {
                 num_required_signatures,
                 num_readonly_signed_accounts,
                 num_readonly_unsigned_accounts,

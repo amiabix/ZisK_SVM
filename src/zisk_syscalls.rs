@@ -128,7 +128,7 @@ pub mod memory {
         
         context.consume_compute(compute_units as u64)?;
         
-        if dst.as_ptr() < src.as_ptr() || dst.as_ptr() >= src.as_ptr().add(bytes) {
+        if dst.as_ptr() < src.as_ptr() || dst.as_ptr() >= unsafe { src.as_ptr().add(bytes) } {
             // No overlap, safe to copy
             dst[..bytes].copy_from_slice(&src[..bytes]);
         } else {

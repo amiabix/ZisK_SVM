@@ -5,7 +5,7 @@
 
 use anyhow::{Result, Context};
 use log::{info, warn};
-use crate::solana_executor::{SolanaExecutionEnvironment, SolanaTransaction, TransactionMessage, TransactionHeader, CompiledInstruction};
+use crate::solana_executor::{SolanaExecutionEnvironment, SolanaTransaction, TransactionMessage, MessageHeader, CompiledInstruction};
 use crate::real_bpf_loader::RealBpfLoader;
 use crate::real_solana_parser::RealSolanaParser;
 use crate::real_account_loader::RealAccountLoader;
@@ -104,7 +104,7 @@ fn create_transaction_from_rpc_data(
     tx_data: &serde_json::Map<String, serde_json::Value>,
 ) -> SolanaTransaction {
     let message = TransactionMessage {
-        header: TransactionHeader {
+        header: MessageHeader {
             num_required_signatures: 1,
             num_readonly_signed_accounts: 0,
             num_readonly_unsigned_accounts: 0,

@@ -231,12 +231,12 @@ fn parse_transaction_data(data: &[u8]) -> Result<TransactionData> {
     }
     
     // Generate transaction hash from signature
-    let transaction_hash = bs58::encode(&signature).into_string();
+    let transaction_hash = bs58::encode(&signature).into_string().into_string();
     
     Ok(TransactionData {
         signature,
         message: TransactionMessage {
-            header: TransactionHeader {
+            header: MessageHeader {
                 num_required_signatures,
                 num_readonly_signed_accounts,
                 num_readonly_unsigned_accounts,
@@ -253,15 +253,15 @@ fn parse_transaction_data(data: &[u8]) -> Result<TransactionData> {
 fn parse_transaction_from_zisk_data(data: &TransactionData) -> Result<solana_executor::SolanaTransaction> {
     // Convert our parsed data to SVM format
     let message = solana_executor::TransactionMessage {
-        header: solana_executor::TransactionHeader {
+        header: solana_executor::MessageHeader {
             num_required_signatures: data.message.header.num_required_signatures,
             num_readonly_signed_accounts: data.message.header.num_readonly_signed_accounts,
             num_readonly_unsigned_accounts: data.message.header.num_readonly_unsigned_accounts,
         },
         account_keys: data.message.account_keys.iter()
-            .map(|key| bs58::encode(key).into_string())
+            .map(|key| bs58::encode(key).into_string().into_string())
             .collect(),
-        recent_blockhash: bs58::encode(&data.message.recent_blockhash).into_string(),
+        recent_blockhash: bs58::encode(&data.message.recent_blockhash).into_string().into_string(),
         instructions: data.message.instructions.iter()
             .map(|inst| solana_executor::CompiledInstruction {
                 program_id_index: inst.program_id_index,
@@ -272,7 +272,7 @@ fn parse_transaction_from_zisk_data(data: &TransactionData) -> Result<solana_exe
     };
     
     Ok(solana_executor::SolanaTransaction {
-        signatures: vec![bs58::encode(&data.signature).into_string()],
+        signatures: vec![bs58::encode(&data.signature).into_string().into_string()],
         message,
         meta: None,
     })
@@ -388,14 +388,14 @@ struct TransactionData {
 
 #[derive(Debug)]
 struct TransactionMessage {
-    header: TransactionHeader,
+    header: MessageHeader,
     account_keys: Vec<Vec<u8>>,
     recent_blockhash: Vec<u8>,
     instructions: Vec<InstructionData>,
 }
 
 #[derive(Debug)]
-struct TransactionHeader {
+struct MessageHeader {
     num_required_signatures: u8,
     num_readonly_signed_accounts: u8,
     num_readonly_unsigned_accounts: u8,
