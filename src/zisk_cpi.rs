@@ -6,7 +6,7 @@
 use crate::zisk_memory_manager::{ZisKMemoryManager, ZisKMemoryConstraints};
 use anyhow::{Result, anyhow};
 use std::collections::HashMap;
-use sha2::{Sha256, Digest};
+// use sha2::{Sha256, Digest}; // Commented out - not currently used
 use bs58;
 
 /// Program execution context for CPI calls
@@ -301,7 +301,7 @@ impl ZisKCpiContext {
     /// Execute BPF program
     fn execute_bpf_program(
         &self,
-        program: &[u8],
+        _program: &[u8],
         instruction: &[u8],
         context: &mut BpfExecutionContext,
     ) -> Result<()> {
@@ -335,7 +335,7 @@ impl ZisKCpiContext {
     /// Update account states after execution
     fn update_account_states(&mut self, account_infos: &[&AccountInfo]) {
         for account_info in account_infos {
-            if let Some(borrowed) = self.borrowed_accounts.get(&account_info.key) {
+            if let Some(_borrowed) = self.borrowed_accounts.get(&account_info.key) {
                 // Update the original account with borrowed state
                 // This would need to be integrated with the main account manager
             }

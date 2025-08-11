@@ -7,7 +7,8 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 use crate::zisk_proof_schema::AccountState;
-use anyhow::{Result, anyhow};
+use anyhow::Result;
+// use anyhow::{Result, anyhow}; // Commented out - anyhow not used
 
 /// Account snapshot for rollback support
 #[derive(Debug, Clone)]
@@ -189,7 +190,7 @@ impl ZisKTransactionContext {
     }
 
     /// Consume ZisK cycles (internal method)
-    fn consume_cycles(&mut self, cycles: u64) {
+    fn consume_cycles(&mut self, _cycles: u64) {
         // In real ZisK integration, this would update the global cycle counter
         // unsafe { crate::OP_CYCLES += cycles; }
     }

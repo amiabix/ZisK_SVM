@@ -31,8 +31,7 @@ pub use crate::constants::ZisKError;
 pub use zisk_proof_schema::{ZisKSolanaInput, ZisKSolanaOutput, AccountState};
 pub use zisk_compute_budget::{ZisKComputeTracker, ComputeOperation};
 
-// ZisK entrypoint
-use ziskos::entrypoint;
+// ZisK entrypoint - entrypoint macro is used directly
 
 #[no_mangle]
 pub fn main() {
@@ -46,8 +45,6 @@ pub fn main() {
         }
     }
 }
-
-entrypoint!(main);
 
 fn run_zisk_solana_execution() -> Result<(), ZisKError> {
     // Main execution logic

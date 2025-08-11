@@ -317,7 +317,7 @@ impl ZisKComputeIntegration for crate::zisk_syscalls::ZisKSyscallRegistry {
     fn execute_syscall_with_compute(
         &mut self,
         syscall_id: u32,
-        parameters: &[u64],
+        _parameters: &[u64],
         compute_tracker: &mut ZisKComputeTracker,
     ) -> Result<u64, ZisKError> {
         // Determine compute cost and operation type based on syscall
@@ -399,9 +399,9 @@ impl ComputeBudgetUtils {
 
 /// Usage example in your main execution loop
 pub fn execute_solana_program_with_budget(
-    program_data: &[u8],
+    _program_data: &[u8],
     accounts: &mut [crate::zisk_proof_schema::AccountState],
-    instruction_data: &[u8],
+    _instruction_data: &[u8],
     compute_budget: u64,
 ) -> Result<(), ZisKError> {
     let mut compute_tracker = ZisKComputeTracker::new(compute_budget);

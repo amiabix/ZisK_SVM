@@ -205,9 +205,9 @@ pub mod crypto {
 
     /// sol_ed25519_verify - Ed25519 signature verification
     pub fn sol_ed25519_verify(
-        signature: &[u8; 64],
-        message: &[u8],
-        pubkey: &[u8; 32],
+        _signature: &[u8; 64],
+        _message: &[u8],
+        _pubkey: &[u8; 32],
         context: &mut ZisKSyscallContext,
     ) -> Result<bool> {
         let compute_units = 1000; // Ed25519 verification is expensive
@@ -221,9 +221,9 @@ pub mod crypto {
 
     /// sol_secp256k1_verify - Secp256k1 signature verification
     pub fn sol_secp256k1_verify(
-        signature: &[u8; 64],
-        message: &[u8],
-        pubkey: &[u8; 33],
+        _signature: &[u8; 64],
+        _message: &[u8],
+        _pubkey: &[u8; 33],
         context: &mut ZisKSyscallContext,
     ) -> Result<bool> {
         let compute_units = 1000; // Secp256k1 verification is expensive
@@ -241,8 +241,8 @@ pub mod invocation {
 
     /// sol_invoke - Cross-program invocation
     pub fn sol_invoke(
-        instruction: &[u8],
-        account_infos: &[&[u8; 32]],
+        _instruction: &[u8],
+        _account_infos: &[&[u8; 32]],
         context: &mut ZisKSyscallContext,
     ) -> Result<()> {
         let compute_units = 100; // Base cost for CPI
@@ -261,9 +261,9 @@ pub mod invocation {
 
     /// sol_invoke_signed - Cross-program invocation with signed accounts
     pub fn sol_invoke_signed(
-        instruction: &[u8],
-        account_infos: &[&[u8; 32]],
-        seeds: &[&[u8]],
+        _instruction: &[u8],
+        _account_infos: &[&[u8; 32]],
+        _seeds: &[&[u8]],
         context: &mut ZisKSyscallContext,
     ) -> Result<()> {
         let compute_units = 150; // Higher cost for signed invocation
@@ -318,7 +318,7 @@ pub mod accounts {
 
     /// sol_get_account_owner - Get account owner
     pub fn sol_get_account_owner(
-        account: &[u8],
+        _account: &[u8],
         context: &mut ZisKSyscallContext,
     ) -> Result<[u8; 32]> {
         let compute_units = 10;
@@ -331,7 +331,7 @@ pub mod accounts {
 
     /// sol_get_account_data_len - Get account data length
     pub fn sol_get_account_data_len(
-        account: &[u8],
+        _account: &[u8],
         context: &mut ZisKSyscallContext,
     ) -> Result<u64> {
         let compute_units = 5;
@@ -343,7 +343,7 @@ pub mod accounts {
 
     /// sol_get_account_data - Get account data
     pub fn sol_get_account_data(
-        account: &[u8],
+        _account: &[u8],
         output: &mut [u8],
         context: &mut ZisKSyscallContext,
     ) -> Result<u64> {

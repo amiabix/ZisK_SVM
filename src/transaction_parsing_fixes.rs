@@ -265,7 +265,7 @@ impl ZisKTransactionParser {
                                     bs58::decode(s).into_vec().unwrap_or_default()
                                 } else {
                                     // Likely base64 or hex
-                                    base64::decode(s).unwrap_or_else(|_| {
+                                    base64::engine::general_purpose::STANDARD.decode(s).unwrap_or_else(|_| {
                                         hex::decode(s).unwrap_or_default()
                                     })
                                 }

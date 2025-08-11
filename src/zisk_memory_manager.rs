@@ -4,7 +4,8 @@
 //! ZisK's constrained RISC-V environment, handling strict memory limits,
 //! safe account access, and proper cycle accounting for memory operations.
 
-use anyhow::{Result, anyhow};
+use anyhow::Result;
+// use anyhow::{Result, anyhow}; // Commented out - anyhow not used
 use std::collections::HashMap;
 
 /// ZisK memory constraints for RISC-V environment

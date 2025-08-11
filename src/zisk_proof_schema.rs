@@ -8,8 +8,8 @@ use crate::bpf_interpreter::SolanaAccount;
 use crate::real_solana_parser::RealSolanaTransaction;
 use anyhow::{Result, anyhow};
 use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
-use solana_sdk::pubkey::Pubkey;
+// use std::collections::HashMap; // Commented out - not currently used
+// use solana_sdk::pubkey::Pubkey; // Commented out - not currently used
 use std::str::FromStr;
 
 /// Input to ZisK proving system for Solana transaction execution
