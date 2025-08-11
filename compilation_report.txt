@@ -1,0 +1,1173 @@
+warning: unused manifest key: target.riscv64imac-unknown-none-elf.rustflags
+   Compiling proc-macro2 v1.0.95
+   Compiling unicode-ident v1.0.18
+   Compiling libc v0.2.174
+   Compiling version_check v0.9.5
+    Checking cfg-if v1.0.1
+   Compiling typenum v1.18.0
+   Compiling serde v1.0.219
+   Compiling autocfg v1.5.0
+    Checking subtle v2.6.1
+   Compiling zerocopy v0.8.26
+   Compiling hashbrown v0.15.5
+   Compiling equivalent v1.0.2
+   Compiling once_cell v1.21.3
+   Compiling syn v1.0.109
+    Checking cpufeatures v0.2.17
+   Compiling toml_datetime v0.6.11
+   Compiling winnow v0.7.12
+   Compiling cfg_aliases v0.2.1
+   Compiling getrandom v0.3.3
+    Checking five8_core v0.1.2
+   Compiling semver v1.0.26
+    Checking solana-sanitize v2.2.1
+    Checking solana-atomic-u64 v2.2.1
+    Checking lazy_static v1.5.0
+   Compiling shlex v1.3.0
+   Compiling getrandom v0.1.16
+   Compiling bs58 v0.5.1
+    Checking opaque-debug v0.3.1
+    Checking byteorder v1.5.0
+    Checking solana-msg v2.2.1
+   Compiling pkg-config v0.3.32
+   Compiling borsh v1.5.7
+    Checking five8 v0.2.1
+    Checking five8_const v0.1.4
+    Checking signature v1.6.4
+    Checking fnv v1.0.7
+    Checking memchr v2.7.5
+    Checking log v0.4.27
+    Checking solana-program-memory v2.3.1
+    Checking percent-encoding v2.3.1
+    Checking base64 v0.22.1
+    Checking keccak v0.1.5
+   Compiling thiserror v2.0.12
+    Checking ed25519 v1.5.3
+    Checking itoa v1.0.15
+   Compiling vcpkg v0.2.15
+    Checking either v1.15.0
+   Compiling serde_json v1.0.142
+   Compiling crunchy v0.2.4
+    Checking derivation-path v0.2.0
+    Checking qstring v0.7.2
+    Checking uriparse v0.6.4
+   Compiling feature-probe v0.1.1
+    Checking arrayref v0.3.9
+   Compiling openssl v0.10.73
+    Checking ryu v1.0.20
+   Compiling thiserror v1.0.69
+    Checking constant_time_eq v0.3.1
+    Checking solana-program-option v2.2.1
+   Compiling generic-array v0.14.7
+   Compiling ahash v0.8.12
+    Checking arrayvec v0.7.6
+   Compiling stable_deref_trait v1.2.0
+    Checking itertools v0.12.1
+   Compiling icu_properties_data v2.0.1
+   Compiling bv v0.11.1
+   Compiling icu_normalizer_data v2.0.0
+    Checking base64 v0.12.3
+    Checking foreign-types-shared v0.1.1
+    Checking smallvec v1.15.1
+   Compiling pin-project-lite v0.2.16
+   Compiling native-tls v0.2.14
+    Checking regex-syntax v0.8.5
+   Compiling httparse v1.10.1
+    Checking foreign-types v0.3.2
+   Compiling bytes v1.10.1
+   Compiling parking_lot_core v0.9.11
+   Compiling num-traits v0.2.19
+   Compiling lock_api v0.4.13
+   Compiling writeable v0.6.1
+   Compiling rustversion v1.0.22
+   Compiling rustc_version v0.4.1
+   Compiling litemap v0.8.0
+   Compiling paste v1.0.15
+    Checking scopeguard v1.2.0
+   Compiling futures-core v0.3.31
+   Compiling memoffset v0.9.1
+   Compiling strsim v0.11.1
+    Checking solana-native-token v2.3.0
+   Compiling ident_case v1.0.1
+    Checking aho-corasick v1.1.3
+   Compiling indexmap v2.10.0
+   Compiling tracing-core v0.1.34
+   Compiling zstd-safe v7.2.4
+   Compiling slab v0.4.11
+   Compiling curve25519-dalek v4.1.3
+   Compiling futures-task v0.3.31
+    Checking solana-derivation-path v2.2.1
+   Compiling pin-utils v0.1.0
+   Compiling futures-sink v0.3.31
+   Compiling bitflags v2.9.1
+   Compiling futures-io v0.3.31
+   Compiling quote v1.0.40
+    Checking itertools v0.10.5
+   Compiling try-lock v0.2.5
+    Checking solana-seed-derivable v2.2.1
+    Checking humantime v2.2.0
+   Compiling signal-hook v0.3.18
+    Checking termcolor v1.4.1
+   Compiling openssl-probe v0.1.6
+   Compiling want v0.3.1
+    Checking http v0.2.12
+   Compiling form_urlencoded v1.2.1
+   Compiling futures-channel v0.3.31
+   Compiling syn v2.0.104
+   Compiling futures-util v0.3.31
+   Compiling tower-service v0.3.3
+   Compiling tracing v0.1.41
+   Compiling utf8_iter v1.0.4
+   Compiling httpdate v1.0.3
+   Compiling jobserver v0.1.33
+   Compiling mio v1.0.4
+   Compiling socket2 v0.6.0
+   Compiling socket2 v0.5.10
+    Checking iana-time-zone v0.1.63
+    Checking solana-security-txt v1.1.1
+   Compiling base64 v0.21.7
+    Checking getrandom v0.2.16
+    Checking signal-hook-registry v1.4.6
+   Compiling cc v1.2.32
+   Compiling num-integer v0.1.46
+    Checking atty v0.2.14
+    Checking memmap2 v0.5.10
+    Checking rand_core v0.5.1
+    Checking rand_core v0.6.4
+    Checking solana-decode-error v2.3.0
+    Checking solana-precompile-error v2.2.2
+    Checking parking_lot v0.12.4
+   Compiling encoding_rs v0.8.35
+   Compiling sync_wrapper v0.1.2
+    Checking solana-svm-feature-set v2.3.7
+   Compiling rustls-pemfile v1.0.4
+   Compiling tokio v1.47.1
+   Compiling ipnet v2.11.0
+   Compiling mime v0.3.17
+    Checking solana-time-utils v2.2.1
+    Checking void v1.0.2
+   Compiling tiny-keccak v2.0.2
+   Compiling num-bigint v0.4.6
+    Checking crypto-common v0.1.6
+    Checking block-buffer v0.10.4
+    Checking digest v0.9.0
+    Checking block-buffer v0.9.0
+    Checking inout v0.1.4
+    Checking crypto-mac v0.8.0
+   Compiling http-body v0.4.6
+   Compiling libsecp256k1-core v0.2.2
+    Checking universal-hash v0.5.1
+    Checking digest v0.10.7
+    Checking aead v0.5.2
+   Compiling lib-c v0.10.0 (https://github.com/0xPolygonHermez/zisk.git#c560a0e7)
+    Checking unreachable v1.0.0
+    Checking sha2 v0.9.9
+    Checking cipher v0.4.4
+    Checking hmac v0.8.1
+    Checking signature v2.2.0
+    Checking siphasher v0.3.11
+    Checking ascii v0.9.3
+    Checking polyval v0.6.2
+    Checking solana-define-syscall v2.3.0
+   Compiling anyhow v1.0.98
+    Checking hmac-drbg v0.3.0
+    Checking managed v0.8.0
+    Checking bitflags v1.3.2
+    Checking ed25519 v2.2.3
+    Checking sha2 v0.10.9
+    Checking sha3 v0.10.8
+    Checking hmac v0.12.1
+    Checking pbkdf2 v0.11.0
+    Checking aes v0.8.4
+    Checking ctr v0.9.2
+    Checking gdbstub v0.6.6
+    Checking regex-automata v0.4.9
+    Checking is-terminal v0.4.16
+    Checking hash32 v0.2.1
+    Checking combine v3.8.1
+   Compiling toml_edit v0.22.27
+    Checking solana-validator-exit v2.2.1
+    Checking scroll v0.11.0
+    Checking rustc-demangle v0.1.26
+    Checking static_assertions v1.1.0
+    Checking hex v0.4.3
+    Checking ppv-lite86 v0.2.21
+    Checking solana-seed-phrase v2.2.1
+    Checking hashbrown v0.13.2
+   Compiling libsecp256k1-gen-ecmult v0.2.1
+   Compiling libsecp256k1-gen-genmult v0.2.1
+   Compiling libsecp256k1 v0.6.0
+   Compiling openssl-sys v0.9.109
+   Compiling blake3 v1.8.2
+   Compiling zstd-sys v2.0.15+zstd.1.5.7
+    Checking rand_chacha v0.3.1
+    Checking rand_chacha v0.2.2
+    Checking rand v0.7.3
+    Checking rand v0.8.5
+    Checking solana-big-mod-exp v2.2.1
+    Checking ark-std v0.4.0
+    Checking ziskos v0.10.0 (https://github.com/0xPolygonHermez/zisk.git#c560a0e7)
+   Compiling proc-macro-crate v3.3.0
+    Checking regex v1.11.1
+   Compiling synstructure v0.13.2
+   Compiling darling_core v0.20.11
+    Checking env_logger v0.9.3
+    Checking Inflector v0.11.4
+    Checking env_logger v0.10.2
+   Compiling borsh-schema-derive-internal v0.10.4
+   Compiling borsh-derive-internal v0.10.4
+    Checking solana-logger v2.3.1
+   Compiling tokio-util v0.7.16
+   Compiling serde_derive v1.0.219
+   Compiling zeroize_derive v1.4.2
+   Compiling bytemuck_derive v1.10.1
+   Compiling borsh-derive v1.5.7
+   Compiling curve25519-dalek-derive v0.1.1
+   Compiling solana-sdk-macro v2.2.1
+   Compiling thiserror-impl v2.0.12
+   Compiling zerovec-derive v0.11.1
+   Compiling displaydoc v0.2.5
+   Compiling num-derive v0.4.2
+   Compiling openssl-macros v0.1.1
+   Compiling thiserror-impl v1.0.69
+   Compiling num_enum_derive v0.7.4
+   Compiling tokio-macros v2.5.0
+   Compiling spl-program-error-derive v0.5.0
+   Compiling cfg_eval v0.1.2
+   Compiling zerofrom-derive v0.1.6
+   Compiling yoke-derive v0.8.0
+   Compiling ark-serialize-derive v0.4.2
+   Compiling ark-ff-macros v0.4.2
+   Compiling derivative v2.2.0
+   Compiling ark-ff-asm v0.4.2
+   Compiling h2 v0.3.27
+    Checking zeroize v1.8.1
+    Checking ark-serialize v0.4.2
+    Checking curve25519-dalek v3.2.0
+    Checking aes-gcm-siv v0.11.1
+    Checking merlin v3.0.0
+    Checking num_enum v0.7.4
+    Checking bytemuck v1.23.2
+   Compiling zerofrom v0.1.6
+   Compiling spl-discriminator-syn v0.2.0
+    Checking solana_rbpf v0.8.5
+    Checking yoke v0.8.0
+   Compiling spl-discriminator-derive v0.2.0
+   Compiling zerovec v0.11.4
+   Compiling zerotrie v0.2.2
+    Checking ark-ff v0.4.2
+    Checking zstd v0.13.3
+   Compiling darling_macro v0.20.11
+   Compiling tinystr v0.8.1
+   Compiling potential_utf v0.1.2
+   Compiling darling v0.20.11
+   Compiling serde_with_macros v3.14.0
+   Compiling icu_collections v2.0.0
+   Compiling icu_locale_core v2.0.0
+   Compiling hyper v0.14.32
+    Checking icu_provider v2.0.0
+    Checking icu_properties v2.0.1
+    Checking icu_normalizer v2.0.0
+   Compiling tokio-native-tls v0.3.1
+    Checking idna_adapter v1.2.1
+    Checking idna v1.0.3
+    Checking url v2.5.4
+   Compiling hyper-tls v0.5.0
+    Checking solana-hash v2.3.0
+    Checking bincode v1.3.3
+    Checking ed25519-dalek v1.0.1
+    Checking serde-big-array v0.5.1
+    Checking solana-fee-calculator v2.2.1
+    Checking serde_bytes v0.11.17
+    Checking solana-short-vec v2.2.1
+    Checking solana-serde-varint v2.2.2
+    Checking solana-reward-info v2.2.1
+    Checking solana-hard-forks v2.2.1
+    Checking solana-commitment-config v2.2.1
+    Checking solana-inflation v2.2.1
+    Checking chrono v0.4.41
+    Checking solana-poh-config v2.2.1
+    Checking serde_with v3.14.0
+    Checking solana-epoch-info v2.2.1
+    Checking solana-serde v2.2.1
+    Checking serde_urlencoded v0.7.1
+    Checking solana-sha256-hasher v2.3.0
+    Checking solana-keccak-hasher v2.2.1
+    Checking solana-blake3-hasher v2.2.1
+    Checking solana-cluster-type v2.2.1
+    Checking solana-shred-version v2.2.1
+    Checking solana-signature v2.3.0
+    Checking ed25519-dalek-bip32 v0.2.0
+   Compiling toml v0.5.11
+    Checking solana-packet v2.2.1
+    Checking solana-curve25519 v2.3.7
+    Checking ed25519-dalek v2.2.0
+    Checking ark-poly v0.4.2
+   Compiling reqwest v0.11.27
+   Compiling proc-macro-crate v0.1.5
+   Compiling borsh-derive v0.10.4
+    Checking ark-ec v0.4.2
+    Checking borsh v0.10.4
+    Checking solana-pubkey v2.4.0
+    Checking solana-borsh v2.2.1
+    Checking kaigan v0.2.6
+    Checking solana-instruction v2.3.0
+    Checking solana-sdk-ids v2.2.1
+    Checking solana-nonce v2.2.1
+    Checking spl-generic-token v1.0.1
+    Checking solana-epoch-rewards-hasher v2.2.1
+    Checking solana-rent-debits v2.2.1
+    Checking solana-sysvar-id v2.2.1
+    Checking solana-program-error v2.2.2
+    Checking solana-transaction-error v2.2.1
+    Checking solana-system-interface v1.0.0
+    Checking solana-serialize-utils v2.2.1
+    Checking solana-bincode v2.2.1
+    Checking solana-stable-layout v2.2.1
+    Checking solana-loader-v2-interface v2.2.1
+    Checking spl-associated-token-account-client v2.0.0
+    Checking solana-compute-budget-interface v2.2.2
+    Checking solana-epoch-schedule v2.2.1
+    Checking solana-clock v2.2.2
+    Checking solana-slot-hashes v2.2.1
+    Checking solana-rent v2.2.1
+    Checking solana-last-restart-slot v2.2.1
+    Checking solana-epoch-rewards v2.2.1
+    Checking solana-slot-history v2.2.1
+    Checking solana-feature-set v2.2.5
+    Checking agave-feature-set v2.3.7
+    Checking solana-account-info v2.3.0
+    Checking spl-discriminator v0.4.1
+    Checking solana-program-pack v2.2.1
+    Checking spl-program-error v0.7.0
+    Checking solana-address-lookup-table-interface v2.2.2
+    Checking ark-bn254 v0.4.0
+    Checking solana-loader-v4-interface v2.2.1
+    Checking solana-vote-interface v2.2.6
+    Checking solana-loader-v3-interface v5.0.0
+    Checking solana-signer v2.2.1
+    Checking solana-message v2.4.0
+    Checking solana-cpi v2.2.1
+    Checking solana-instructions-sysvar v2.2.2
+    Checking solana-program-entrypoint v2.3.0
+   Compiling solana_test v0.1.0 (/home/ayush/Examples/solana_Test)
+    Checking solana-zk-sdk v2.3.7
+    Checking solana-keypair v2.2.3
+    Checking solana-presigner v2.2.1
+    Checking solana-offchain-message v2.2.1
+    Checking solana-stake-interface v1.2.1
+    Checking spl-memo v6.0.0
+    Checking solana-bn254 v2.2.2
+warning: use of deprecated function `base64::decode`: Use Engine::decode
+   --> build.rs:233:46
+    |
+233 |                     let data_bytes = base64::decode(data_base64)?;
+    |                                              ^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+    Checking solana-quic-definitions v2.3.1
+    Checking solana-secp256r1-program v2.2.4
+    Checking solana-ed25519-program v2.2.3
+    Checking solana-reserved-account-keys v2.2.2
+    Checking agave-reserved-account-keys v2.3.7
+    Checking solana-secp256k1-program v2.2.3
+    Checking solana-secp256k1-recover v2.2.1
+    Checking solana-example-mocks v2.2.1
+    Checking solana-precompiles v2.2.2
+    Checking solana-fee-structure v2.3.0
+    Checking solana-sysvar v2.3.0
+    Checking solana-transaction v2.2.3
+    Checking solana-account v2.2.1
+    Checking spl-token v8.0.0
+    Checking solana-system-transaction v2.2.1
+    Checking solana-feature-gate-interface v2.2.2
+    Checking solana-transaction-context v2.3.7
+    Checking solana-account-decoder-client-types v2.3.7
+    Checking solana-genesis-config v2.3.0
+    Checking solana-client-traits v2.2.1
+    Checking solana-nonce-account v2.2.1
+    Checking spl-pod v0.5.1
+    Checking spl-token-confidential-transfer-proof-generation v0.4.0
+    Checking spl-token-confidential-transfer-ciphertext-arithmetic v0.3.0
+    Checking solana-program v2.3.0
+    Checking solana-rent-collector v2.2.1
+    Checking solana-config-program-client v0.0.2
+    Checking spl-type-length-value v0.8.0
+    Checking spl-token-confidential-transfer-proof-extraction v0.3.0
+    Checking spl-token-group-interface v0.6.0
+    Checking solana-sdk v2.3.1
+warning: `solana_test` (build script) generated 1 warning
+    Checking spl-tlv-account-resolution v0.10.0
+    Checking spl-token-metadata-interface v0.7.0
+    Checking spl-elgamal-registry v0.2.0
+    Checking spl-transfer-hook-interface v0.10.0
+    Checking spl-token-2022 v8.0.1
+    Checking solana-transaction-status-client-types v2.3.7
+    Checking spl-associated-token-account v7.0.0
+    Checking solana-account-decoder v2.3.7
+    Checking solana-transaction-status v2.3.7
+warning: solana_test@0.1.0: Processing transaction: 5RWRuyceRphaJm2A5DstxSddB9UzpTVnA1HdunLXuo9fngd3oS7GJWb1gbhtehvxzbGWCzmqaweFEajRAkoq7Dic
+warning: solana_test@0.1.0: Generated ZisK input files:
+warning: solana_test@0.1.0:   - build/input.bin (1738 bytes)
+warning: solana_test@0.1.0:   - build/proof_request.json
+warning: solana_test@0.1.0:   - Transaction: 5RWRuyceRphaJm2A5DstxSddB9UzpTVnA1HdunLXuo9fngd3oS7GJWb1gbhtehvxzbGWCzmqaweFEajRAkoq7Dic
+warning: solana_test@0.1.0: ZisK build configuration completed - real transaction data loaded
+warning: unused import: `Sha256`
+ --> src/zisk_cpi.rs:9:12
+  |
+9 | use sha2::{Sha256, Digest};
+  |            ^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `std::collections::HashMap`
+  --> src/zisk_proof_schema.rs:11:5
+   |
+11 | use std::collections::HashMap;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `solana_sdk::pubkey::Pubkey`
+  --> src/zisk_proof_schema.rs:12:5
+   |
+12 | use solana_sdk::pubkey::Pubkey;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `anyhow`
+ --> src/zisk_memory_manager.rs:7:22
+  |
+7 | use anyhow::{Result, anyhow};
+  |                      ^^^^^^
+
+warning: unused import: `anyhow`
+  --> src/zisk_state_manager.rs:10:22
+   |
+10 | use anyhow::{Result, anyhow};
+   |                      ^^^^^^
+
+warning: unused imports: `Message`, `Transaction`, `VersionedMessage`, and `VersionedTransaction`
+ --> src/transaction_parsing_fixes.rs:8:15
+  |
+8 |     message::{Message, VersionedMessage},
+  |               ^^^^^^^  ^^^^^^^^^^^^^^^^
+9 |     transaction::{VersionedTransaction, Transaction},
+  |                   ^^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^
+
+warning: unused imports: `instruction::CompiledInstruction`, `message::Message`, `pubkey::Pubkey`, `signature::Signature`, and `transaction::Transaction`
+  --> src/real_solana_parser.rs:10:5
+   |
+10 |     transaction::Transaction,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+11 |     pubkey::Pubkey,
+   |     ^^^^^^^^^^^^^^
+12 |     instruction::CompiledInstruction,
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+13 |     message::Message,
+   |     ^^^^^^^^^^^^^^^^
+14 |     signature::Signature,
+   |     ^^^^^^^^^^^^^^^^^^^^
+
+warning: unused imports: `EncodedTransaction` and `UiTransactionEncoding`
+  --> src/real_solana_parser.rs:19:5
+   |
+19 |     EncodedTransaction,
+   |     ^^^^^^^^^^^^^^^^^^
+20 |     UiTransactionEncoding,
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Serialize`
+ --> src/real_account_loader.rs:6:26
+  |
+6 | use serde::{Deserialize, Serialize};
+  |                          ^^^^^^^^^
+
+warning: unused import: `solana_sdk::pubkey::Pubkey`
+ --> src/real_account_loader.rs:7:5
+  |
+7 | use solana_sdk::pubkey::Pubkey;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: use of deprecated function `base64::decode`: Use Engine::decode
+   --> src/transaction_parsing_fixes.rs:268:45
+    |
+268 | ...                   base64::decode(s).unwrap_or_else(|_| {
+    |                               ^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated function `base64::decode`: Use Engine::decode
+   --> src/account_serialization_fixes.rs:164:49
+    |
+164 | ...                   base64::decode(data_str)
+    |                               ^^^^^^
+
+warning: use of deprecated function `base64::decode`: Use Engine::decode
+   --> src/account_serialization_fixes.rs:177:41
+    |
+177 | ...                   base64::decode(data_str)
+    |                               ^^^^^^
+
+warning: use of deprecated function `base64::decode`: Use Engine::decode
+   --> src/account_serialization_fixes.rs:186:33
+    |
+186 |                         base64::decode(data_str)
+    |                                 ^^^^^^
+
+warning: use of deprecated function `base64::decode`: Use Engine::decode
+   --> src/solana_executor.rs:190:44
+    |
+190 |                 let decoded_data = base64::decode(data)
+    |                                            ^^^^^^
+
+warning: use of deprecated function `base64::decode`: Use Engine::decode
+   --> src/solana_executor.rs:380:44
+    |
+380 |                 let decoded_data = base64::decode(data)
+    |                                            ^^^^^^
+
+warning: use of deprecated function `base64::decode`: Use Engine::decode
+   --> src/real_solana_parser.rs:319:44
+    |
+319 |                 let decoded_data = base64::decode(data)
+    |                                            ^^^^^^
+
+warning: use of deprecated function `base64::decode`: Use Engine::decode
+   --> src/real_solana_parser.rs:355:44
+    |
+355 |                 let decoded_data = base64::decode(data)
+    |                                            ^^^^^^
+
+error[E0277]: `EncodeBuilder<'_, [u8; 32]>` doesn't implement `std::fmt::Display`
+   --> src/zisk_cpi.rs:224:70
+    |
+224 |                 return Err(anyhow!("Account {} is already borrowed", bs58::encode(account.key)));
+    |                                             --                       ^^^^^^^^^^^^^^^^^^^^^^^^^ `EncodeBuilder<'_, [u8; 32]>` cannot be formatted with the default formatter
+    |                                             |
+    |                                             required by this formatting parameter
+    |
+    = help: the trait `std::fmt::Display` is not implemented for `EncodeBuilder<'_, [u8; 32]>`
+    = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+    = note: this error originates in the macro `$crate::__export::format_args` which comes from the expansion of the macro `anyhow` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: `EncodeBuilder<'_, [u8; 32]>` doesn't implement `std::fmt::Display`
+   --> src/zisk_cpi.rs:229:66
+    |
+229 |                 return Err(anyhow!("Cannot write to account {}", bs58::encode(account.key)));
+    |                                                             --   ^^^^^^^^^^^^^^^^^^^^^^^^^ `EncodeBuilder<'_, [u8; 32]>` cannot be formatted with the default formatter
+    |                                                             |
+    |                                                             required by this formatting parameter
+    |
+    = help: the trait `std::fmt::Display` is not implemented for `EncodeBuilder<'_, [u8; 32]>`
+    = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+    = note: this error originates in the macro `$crate::__export::format_args` which comes from the expansion of the macro `anyhow` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the `?` operator can only be used in a method that returns `Result` or `Option` (or another type that implements `FromResidual`)
+   --> src/zisk_cpi.rs:328:77
+    |
+319 | /     fn update_accounts_from_execution(
+320 | |         &mut self,
+321 | |         account_infos: &[&AccountInfo],
+322 | |         bpf_context: &BpfExecutionContext,
+323 | |     ) {
+    | |_____- this function should return `Result` or `Option` to accept `?`
+...
+328 |                       borrowed.update_from_account_data(&updated_account.data)?;
+    |                                                                               ^ cannot use the `?` operator in a method that returns `()`
+    |
+help: consider adding return type
+    |
+323 |     ) -> Result<(), Box<dyn std::error::Error>> {
+    |       +++++++++++++++++++++++++++++++++++++++++
+
+error[E0277]: `EncodeBuilder<'_, &[u8; 32]>` doesn't implement `std::fmt::Display`
+   --> src/zisk_cpi.rs:389:60
+    |
+389 |             .ok_or_else(|| anyhow!("Program {} not found", bs58::encode(program_id)))
+    |                                             --             ^^^^^^^^^^^^^^^^^^^^^^^^ `EncodeBuilder<'_, &[u8; 32]>` cannot be formatted with the default formatter
+    |                                             |
+    |                                             required by this formatting parameter
+    |
+    = help: the trait `std::fmt::Display` is not implemented for `EncodeBuilder<'_, &[u8; 32]>`
+    = note: in format strings you may be able to use `{:?}` (or {:#?} for pretty-print) instead
+    = note: this error originates in the macro `$crate::__export::format_args` which comes from the expansion of the macro `anyhow` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0308]: mismatched types
+   --> src/zisk_proof_schema.rs:435:25
+    |
+435 |                 header: transaction.message.header.clone(),
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `MessageHeader`, found `TransactionHeader`
+
+error[E0599]: no method named `unwrap_or_default` found for struct `DecodeBuilder` in the current scope
+   --> src/zisk_proof_schema.rs:442:56
+    |
+442 |                         data: bs58::decode(&inst.data).unwrap_or_default(),
+    |                                                        ^^^^^^^^^^^^^^^^^ method not found in `DecodeBuilder<'static, &std::string::String>`
+
+error[E0308]: mismatched types
+   --> src/zisk_proof_schema.rs:490:21
+    |
+490 |             pubkey: pubkey.to_string(),
+    |                     ^^^^^^^^^^^^^^^^^^ expected `__Pubkey`, found `String`
+
+error[E0308]: mismatched types
+   --> src/zisk_proof_schema.rs:491:20
+    |
+491 |             owner: bs58::encode(account.owner).into_string(),
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `__Pubkey`, found `String`
+
+error[E0560]: struct `solana_rbpf::vm::Config` has no field named `dynamic_stack_frames`
+  --> src/zisk_rbpf_bridge.rs:92:13
+   |
+92 |             dynamic_stack_frames: true,
+   |             ^^^^^^^^^^^^^^^^^^^^ `solana_rbpf::vm::Config` does not have this field
+   |
+   = note: available fields are: `enable_address_translation`, `enable_stack_frame_gaps`, `instruction_meter_checkpoint_distance`, `enable_sbpf_v1`, `enable_sbpf_v2`
+
+error[E0560]: struct `solana_rbpf::vm::Config` has no field named `enable_sdiv`
+  --> src/zisk_rbpf_bridge.rs:93:13
+   |
+93 |             enable_sdiv: true,
+   |             ^^^^^^^^^^^ `solana_rbpf::vm::Config` does not have this field
+   |
+   = note: available fields are: `enable_address_translation`, `enable_stack_frame_gaps`, `instruction_meter_checkpoint_distance`, `enable_sbpf_v1`, `enable_sbpf_v2`
+
+error[E0061]: this function takes 2 arguments but 4 arguments were supplied
+   --> src/zisk_rbpf_bridge.rs:114:30
+    |
+114 |         let mut executable = Executable::<ZisKContextObject>::from_elf(
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+117 |             SBPFVersion::V2,
+    |             --------------- unexpected argument #3 of type `SBPFVersion`
+118 |             function_registry,
+    |             ----------------- unexpected argument #4 of type `FunctionRegistry<_>`
+    |
+note: associated function defined here
+   --> /home/ayush/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana_rbpf-0.8.5/src/vm.rs:123:12
+    |
+123 |     pub fn from_elf(elf_bytes: &[u8], loader: Arc<BuiltinProgram<C>>) -> Result<Self, EbpfError> {
+    |            ^^^^^^^^
+help: remove the extra arguments
+    |
+116 -             self.loader.clone(),
+117 -             SBPFVersion::V2,
+116 +             self.loader.clone(),
+    |
+
+error[E0061]: this function takes 3 arguments but 2 arguments were supplied
+   --> src/zisk_rbpf_bridge.rs:175:30
+    |
+175 |         let memory_mapping = MemoryMapping::new(regions, executable.get_config())
+    |                              ^^^^^^^^^^^^^^^^^^---------------------------------- argument #3 of type `&SBPFVersion` is missing
+    |
+note: associated function defined here
+   --> /home/ayush/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana_rbpf-0.8.5/src/memory_region.rs:750:12
+    |
+750 |     pub fn new(
+    |            ^^^
+help: provide the argument
+    |
+175 |         let memory_mapping = MemoryMapping::new(regions, executable.get_config(), /* &SBPFVersion */)
+    |                                                                                 ++++++++++++++++++++
+
+error[E0061]: this function takes 3 arguments but 2 arguments were supplied
+   --> src/zisk_rbpf_bridge.rs:222:30
+    |
+222 |         let memory_mapping = MemoryMapping::new(regions, executable.get_config())
+    |                              ^^^^^^^^^^^^^^^^^^---------------------------------- argument #3 of type `&SBPFVersion` is missing
+    |
+note: associated function defined here
+   --> /home/ayush/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana_rbpf-0.8.5/src/memory_region.rs:750:12
+    |
+750 |     pub fn new(
+    |            ^^^
+help: provide the argument
+    |
+222 |         let memory_mapping = MemoryMapping::new(regions, executable.get_config(), /* &SBPFVersion */)
+    |                                                                                 ++++++++++++++++++++
+
+error[E0689]: can't call method `saturating_sub` on ambiguous numeric type `{integer}`
+   --> src/zisk_rbpf_bridge.rs:386:41
+    |
+386 |             cycles_consumed: end_cycles.saturating_sub(start_cycles),
+    |                                         ^^^^^^^^^^^^^^
+    |
+help: you must specify a type for this binding, like `i32`
+    |
+383 |         let end_cycles: i32 = 0; // Placeholder for cycle counting
+    |                       +++++
+
+error[E0282]: type annotations needed
+  --> src/zisk_state_manager.rs:68:13
+   |
+68 |         let account_snapshots = accounts
+   |             ^^^^^^^^^^^^^^^^^
+...
+74 |             account_snapshots: account_snapshots.clone(),
+   |                                ----------------- type must be known at this point
+   |
+help: consider giving `account_snapshots` an explicit type
+   |
+68 |         let account_snapshots: Vec<_> = accounts
+   |                              ++++++++
+
+error[E0308]: mismatched types
+   --> src/zisk_state_manager.rs:152:25
+    |
+152 |                 pubkey: pubkey.clone(),
+    |                         ^^^^^^^^^^^^^^ expected `__Pubkey`, found `String`
+
+error[E0063]: missing field `rent_exempt_reserve` in initializer of `AccountState`
+   --> src/zisk_state_manager.rs:151:58
+    |
+151 |             self.current_accounts.insert(pubkey.clone(), AccountState {
+    |                                                          ^^^^^^^^^^^^ missing `rent_exempt_reserve`
+
+error[E0308]: mismatched types
+   --> src/zisk_state_manager.rs:401:13
+    |
+401 |             pubkey,
+    |             ^^^^^^ expected `__Pubkey`, found `String`
+
+error[E0063]: missing field `rent_exempt_reserve` in initializer of `AccountState`
+   --> src/zisk_state_manager.rs:400:9
+    |
+400 |         AccountState {
+    |         ^^^^^^^^^^^^ missing `rent_exempt_reserve`
+
+error[E0308]: mismatched types
+   --> src/solana_executor.rs:139:40
+    |
+139 |         self.parse_encoded_transaction(&transaction.transaction, transaction.transaction.meta.as_ref())
+    |              ------------------------- ^^^^^^^^^^^^^^^^^^^^^^^^ expected `&...`, found `&EncodedTransactionWithStatusMeta`
+    |              |
+    |              arguments to this method are incorrect
+    |
+    = note: expected reference `&EncodedConfirmedTransactionWithStatusMeta`
+               found reference `&EncodedTransactionWithStatusMeta`
+note: method defined here
+   --> src/solana_executor.rs:143:12
+    |
+143 |     pub fn parse_encoded_transaction(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+144 |         &mut self,
+145 |         encoded_tx: &EncodedConfirmedTransactionWithStatusMeta,
+    |         ------------------------------------------------------
+
+error[E0308]: mismatched types
+   --> src/solana_executor.rs:151:13
+    |
+150 |         match &encoded_tx.transaction {
+    |               ----------------------- this expression has type `&EncodedTransactionWithStatusMeta`
+151 |             solana_transaction_status::EncodedTransaction::Json(ui_transaction) => {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `EncodedTransactionWithStatusMeta`, found `EncodedTransaction`
+
+error[E0308]: mismatched types
+   --> src/solana_executor.rs:154:13
+    |
+150 |         match &encoded_tx.transaction {
+    |               ----------------------- this expression has type `&EncodedTransactionWithStatusMeta`
+...
+154 |             solana_transaction_status::EncodedTransaction::Binary(encoding, data) => {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `EncodedTransactionWithStatusMeta`, found `EncodedTransaction`
+
+error[E0308]: arguments to this method are incorrect
+   --> src/solana_executor.rs:155:22
+    |
+155 |                 self.parse_binary_transaction(encoding, data, meta)
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^ --------  ---- expected `&[u8]`, found `&TransactionBinaryEncoding`
+    |                                               |
+    |                                               expected `&UiTransactionEncoding`, found `&String`
+    |
+    = note: expected reference `&UiTransactionEncoding`
+               found reference `&std::string::String`
+    = note: expected reference `&[u8]`
+               found reference `&TransactionBinaryEncoding`
+note: method defined here
+   --> src/solana_executor.rs:174:8
+    |
+174 |     fn parse_binary_transaction(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^
+175 |         &self,
+176 |         encoding: &solana_transaction_status::UiTransactionEncoding,
+    |         -----------------------------------------------------------
+177 |         data: &[u8],
+    |         -----------
+
+error[E0599]: no method named `verify` found for struct `VerifyingKey` in the current scope
+   --> src/solana_executor.rs:629:20
+    |
+629 |             pubkey.verify(&message_bytes, &signature)
+    |                    ^^^^^^ method not found in `VerifyingKey`
+    |
+   ::: /home/ayush/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signature-2.2.0/src/verifier.rs:14:8
+    |
+14  |     fn verify(&self, msg: &[u8], signature: &S) -> Result<(), Error>;
+    |        ------ the method is available for `VerifyingKey` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait `Verifier` which provides `verify` is implemented but not in scope; perhaps you want to import it
+    |
+19  + use ed25519_dalek::Verifier;
+    |
+
+error[E0308]: mismatched types
+   --> src/real_bpf_loader.rs:81:13
+    |
+79  |         let executable = Executable::<TestContextObject>::from_elf(
+    |                          ----------------------------------------- arguments to this function are incorrect
+80  |             program_data,
+81  |             &mut self.function_registry,
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Arc<BuiltinProgram<TestContextObject>>`, found `&mut FunctionRegistry<TestContextObject>`
+    |
+    = note:         expected struct `Arc<BuiltinProgram<TestContextObject>>`
+            found mutable reference `&mut FunctionRegistry<TestContextObject>`
+note: associated function defined here
+   --> /home/ayush/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana_rbpf-0.8.5/src/vm.rs:123:12
+    |
+123 |     pub fn from_elf(elf_bytes: &[u8], loader: Arc<BuiltinProgram<C>>) -> Result<Self, EbpfError> {
+    |            ^^^^^^^^
+
+error[E0599]: the method `context` exists for enum `std::result::Result<Executable<TestContextObject>, EbpfError>`, but its trait bounds were not satisfied
+  --> src/real_bpf_loader.rs:82:11
+   |
+79 |           let executable = Executable::<TestContextObject>::from_elf(
+   |  __________________________-
+80 | |             program_data,
+81 | |             &mut self.function_registry,
+82 | |         ).context("Failed to create executable from ELF")?;
+   | |          -^^^^^^^ method cannot be called due to unsatisfied trait bounds
+   | |__________|
+   |
+   |
+  ::: /home/ayush/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/solana_rbpf-0.8.5/src/error.rs:17:1
+   |
+17 |   pub enum EbpfError {
+   |   ------------------ doesn't satisfy `EbpfError: Send`, `EbpfError: Sync` or `EbpfError: anyhow::context::ext::StdError`
+   |
+   = note: the following trait bounds were not satisfied:
+           `EbpfError: anyhow::context::ext::StdError`
+           which is required by `std::result::Result<Executable<TestContextObject>, EbpfError>: anyhow::Context<Executable<TestContextObject>, EbpfError>`
+           `EbpfError: Send`
+           which is required by `std::result::Result<Executable<TestContextObject>, EbpfError>: anyhow::Context<Executable<TestContextObject>, EbpfError>`
+           `EbpfError: Sync`
+           which is required by `std::result::Result<Executable<TestContextObject>, EbpfError>: anyhow::Context<Executable<TestContextObject>, EbpfError>`
+
+error[E0308]: mismatched types
+   --> src/real_bpf_loader.rs:172:47
+    |
+172 |         let result = executor.execute_program(executable, instruction_data, 1000000)
+    |                               --------------- ^^^^^^^^^^ expected `&Executable<ZisKContextObject>`, found `&Executable<TestContextObject>`
+    |                               |
+    |                               arguments to this method are incorrect
+    |
+    = note: expected reference `&Executable<ZisKContextObject>`
+               found reference `&Executable<TestContextObject>`
+note: method defined here
+   --> src/zisk_rbpf_bridge.rs:149:12
+    |
+149 |     pub fn execute_program(
+    |            ^^^^^^^^^^^^^^^
+150 |         &self,
+151 |         executable: &Executable<ZisKContextObject>,
+    |         ------------------------------------------
+
+error[E0308]: mismatched types
+   --> src/real_solana_parser.rs:216:40
+    |
+216 |         self.parse_encoded_transaction(&transaction.transaction, None)
+    |              ------------------------- ^^^^^^^^^^^^^^^^^^^^^^^^ expected `&...`, found `&EncodedTransactionWithStatusMeta`
+    |              |
+    |              arguments to this method are incorrect
+    |
+    = note: expected reference `&EncodedConfirmedTransactionWithStatusMeta`
+               found reference `&EncodedTransactionWithStatusMeta`
+note: method defined here
+   --> src/real_solana_parser.rs:220:12
+    |
+220 |     pub fn parse_encoded_transaction(
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+221 |         &mut self,
+222 |         encoded_tx: &EncodedConfirmedTransactionWithStatusMeta,
+    |         ------------------------------------------------------
+
+error[E0308]: mismatched types
+   --> src/real_solana_parser.rs:228:13
+    |
+227 |         match &encoded_tx.transaction {
+    |               ----------------------- this expression has type `&EncodedTransactionWithStatusMeta`
+228 |             solana_transaction_status::EncodedTransaction::Json(ui_transaction) => {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `EncodedTransactionWithStatusMeta`, found `EncodedTransaction`
+
+error[E0308]: mismatched types
+   --> src/real_solana_parser.rs:231:13
+    |
+227 |         match &encoded_tx.transaction {
+    |               ----------------------- this expression has type `&EncodedTransactionWithStatusMeta`
+...
+231 |             solana_transaction_status::EncodedTransaction::Binary(encoding, data) => {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `EncodedTransactionWithStatusMeta`, found `EncodedTransaction`
+
+error[E0308]: arguments to this method are incorrect
+   --> src/real_solana_parser.rs:232:22
+    |
+232 |                 self.parse_binary_transaction(encoding, data, meta)
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^ --------  ---- expected `&[u8]`, found `&TransactionBinaryEncoding`
+    |                                               |
+    |                                               expected `&UiTransactionEncoding`, found `&String`
+    |
+    = note: expected reference `&UiTransactionEncoding`
+               found reference `&std::string::String`
+    = note: expected reference `&[u8]`
+               found reference `&TransactionBinaryEncoding`
+note: method defined here
+   --> src/real_solana_parser.rs:303:8
+    |
+303 |     fn parse_binary_transaction(
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^
+304 |         &self,
+305 |         encoding: &solana_transaction_status::UiTransactionEncoding,
+    |         -----------------------------------------------------------
+306 |         data: &[u8],
+    |         -----------
+
+error[E0608]: cannot index into a value of type `u64`
+   --> src/bpf_interpreter.rs:396:38
+    |
+396 |         let cycles_needed = OP_CYCLES[opcode];
+    |                                      ^^^^^^^^
+
+error[E0308]: mismatched types
+  --> src/lib.rs:50:1
+   |
+50 | entrypoint!(main);
+   | ^^^^^^^^^^^^^^^^^ expected "Rust" fn, found "C" fn
+   |
+   = note: expected fn pointer `fn()`
+                 found fn item `extern "C" fn() {main}`
+   = note: this error originates in the macro `entrypoint` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused import: `Digest`
+ --> src/zisk_cpi.rs:9:20
+  |
+9 | use sha2::{Sha256, Digest};
+  |                    ^^^^^^
+
+warning: unused import: `signer::Signer`
+  --> src/real_solana_parser.rs:15:5
+   |
+15 |     signer::Signer,
+   |     ^^^^^^^^^^^^^^
+
+error[E0133]: call to unsafe function `std::ptr::const_ptr::<impl *const T>::add` is unsafe and requires unsafe function or block
+   --> src/zisk_syscalls.rs:131:59
+    |
+131 |         if dst.as_ptr() < src.as_ptr() || dst.as_ptr() >= src.as_ptr().add(bytes) {
+    |                                                           ^^^^^^^^^^^^^^^^^^^^^^^ call to unsafe function
+    |
+    = note: consult the function's documentation for information on how to avoid undefined behavior
+
+warning: unused variable: `signature`
+   --> src/zisk_syscalls.rs:208:9
+    |
+208 |         signature: &[u8; 64],
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_signature`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `message`
+   --> src/zisk_syscalls.rs:209:9
+    |
+209 |         message: &[u8],
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_message`
+
+warning: unused variable: `pubkey`
+   --> src/zisk_syscalls.rs:210:9
+    |
+210 |         pubkey: &[u8; 32],
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_pubkey`
+
+warning: unused variable: `signature`
+   --> src/zisk_syscalls.rs:224:9
+    |
+224 |         signature: &[u8; 64],
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_signature`
+
+warning: unused variable: `message`
+   --> src/zisk_syscalls.rs:225:9
+    |
+225 |         message: &[u8],
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_message`
+
+warning: unused variable: `pubkey`
+   --> src/zisk_syscalls.rs:226:9
+    |
+226 |         pubkey: &[u8; 33],
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_pubkey`
+
+warning: unused variable: `instruction`
+   --> src/zisk_syscalls.rs:244:9
+    |
+244 |         instruction: &[u8],
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_instruction`
+
+warning: unused variable: `account_infos`
+   --> src/zisk_syscalls.rs:245:9
+    |
+245 |         account_infos: &[&[u8; 32]],
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_account_infos`
+
+warning: unused variable: `instruction`
+   --> src/zisk_syscalls.rs:264:9
+    |
+264 |         instruction: &[u8],
+    |         ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_instruction`
+
+warning: unused variable: `account_infos`
+   --> src/zisk_syscalls.rs:265:9
+    |
+265 |         account_infos: &[&[u8; 32]],
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_account_infos`
+
+warning: unused variable: `seeds`
+   --> src/zisk_syscalls.rs:266:9
+    |
+266 |         seeds: &[&[u8]],
+    |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_seeds`
+
+warning: unused variable: `account`
+   --> src/zisk_syscalls.rs:321:9
+    |
+321 |         account: &[u8],
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_account`
+
+warning: unused variable: `account`
+   --> src/zisk_syscalls.rs:334:9
+    |
+334 |         account: &[u8],
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_account`
+
+warning: unused variable: `account`
+   --> src/zisk_syscalls.rs:346:9
+    |
+346 |         account: &[u8],
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_account`
+
+warning: unused variable: `program`
+   --> src/zisk_cpi.rs:304:9
+    |
+304 |         program: &[u8],
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_program`
+
+warning: unused variable: `borrowed`
+   --> src/zisk_cpi.rs:337:25
+    |
+337 |             if let Some(borrowed) = self.borrowed_accounts.get(&account_info.key) {
+    |                         ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_borrowed`
+
+warning: value assigned to `address` is never read
+   --> src/zisk_cpi.rs:408:17
+    |
+408 |         let mut address = [0u8; 32];
+    |                 ^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` on by default
+
+error[E0716]: temporary value dropped while borrowed
+   --> src/zisk_cpi.rs:412:35
+    |
+412 |             seeds_with_bump.push(&[bump_seed]);
+    |                                   ^^^^^^^^^^^ - temporary value is freed at the end of this statement
+    |                                   |
+    |                                   creates a temporary value which is freed while still in use
+413 |
+414 |             if let Ok(addr) = try_find_program_address(&seeds_with_bump, program_id) {
+    |                                                        ---------------- borrow later used here
+    |
+    = note: consider using a `let` binding to create a longer lived value
+
+warning: unused variable: `parameters`
+   --> src/zisk_compute_budget.rs:320:9
+    |
+320 |         parameters: &[u64],
+    |         ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_parameters`
+
+warning: unused variable: `program_data`
+   --> src/zisk_compute_budget.rs:402:5
+    |
+402 |     program_data: &[u8],
+    |     ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_program_data`
+
+warning: unused variable: `instruction_data`
+   --> src/zisk_compute_budget.rs:404:5
+    |
+404 |     instruction_data: &[u8],
+    |     ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_instruction_data`
+
+warning: variable does not need to be mutable
+   --> src/zisk_rbpf_bridge.rs:134:13
+    |
+134 |         let mut executable = Executable::<ZisKContextObject>::from_text_bytes(
+    |             ----^^^^^^^^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` on by default
+
+warning: unused variable: `parameters`
+   --> src/zisk_rbpf_bridge.rs:309:51
+    |
+309 |     fn handle_syscall(&mut self, syscall_id: u32, parameters: &[u64]) -> Result<u64, ZisKBpfError> {
+    |                                                   ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_parameters`
+
+error[E0596]: cannot borrow `*self.memory_manager` as mutable, as it is behind a `&` reference
+   --> src/zisk_memory_manager.rs:238:9
+    |
+238 |         self.memory_manager.consume_cycles(1);
+    |         ^^^^^^^^^^^^^^^^^^^ `self` is a `&` reference, so the data it refers to cannot be borrowed as mutable
+    |
+help: consider changing this to be a mutable reference
+    |
+232 |     pub fn read_u64(&mut self, offset: usize) -> Result<u64, ZisKError> {
+    |                      +++
+
+error[E0596]: cannot borrow `*self.memory_manager` as mutable, as it is behind a `&` reference
+   --> src/zisk_memory_manager.rs:281:9
+    |
+281 |         self.memory_manager.consume_cycles(length as u64 / 64);
+    |         ^^^^^^^^^^^^^^^^^^^ `self` is a `&` reference, so the data it refers to cannot be borrowed as mutable
+    |
+help: consider changing this to be a mutable reference
+    |
+275 |     pub fn read_bytes(&mut self, offset: usize, length: usize) -> Result<&[u8], ZisKError> {
+    |                        +++
+
+warning: unused variable: `cycles`
+   --> src/zisk_state_manager.rs:191:34
+    |
+191 |     fn consume_cycles(&mut self, cycles: u64) {
+    |                                  ^^^^^^ help: if this is intentional, prefix it with an underscore: `_cycles`
+
+warning: unused variable: `account_keys`
+   --> src/transaction_parsing_fixes.rs:303:13
+    |
+303 |         let account_keys = account_keys
+    |             ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_account_keys`
+
+warning: unused variable: `recent_blockhash`
+   --> src/transaction_parsing_fixes.rs:307:13
+    |
+307 |         let recent_blockhash = compat_tx
+    |             ^^^^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_recent_blockhash`
+
+Some errors have detailed explanations: E0061, E0063, E0133, E0277, E0282, E0308, E0560, E0596, E0599...
+For more information about an error, try `rustc --explain E0061`.
+warning: `solana_test` (lib) generated 45 warnings
+warning: solana_test@0.1.0: Processing transaction: 5RWRuyceRphaJm2A5DstxSddB9UzpTVnA1HdunLXuo9fngd3oS7GJWb1gbhtehvxzbGWCzmqaweFEajRAkoq7Dic
+warning: solana_test@0.1.0: Generated ZisK input files:
+warning: solana_test@0.1.0:   - build/input.bin (1738 bytes)
+warning: solana_test@0.1.0:   - build/proof_request.json
+warning: solana_test@0.1.0:   - Transaction: 5RWRuyceRphaJm2A5DstxSddB9UzpTVnA1HdunLXuo9fngd3oS7GJWb1gbhtehvxzbGWCzmqaweFEajRAkoq7Dic
+warning: solana_test@0.1.0: ZisK build configuration completed - real transaction data loaded
+error: could not compile `solana_test` (lib) due to 37 previous errors; 45 warnings emitted

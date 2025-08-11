@@ -12,21 +12,27 @@
 //! - Transaction simulation and validation
 //! - State consistency verification
 
-use crate::bpf_interpreter::SolanaAccount;
+#![allow(unused_imports)]
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
+use crate::{
+    ZisKError,
+    zisk_proof_schema::{ZisKSolanaInput, ZisKSolanaOutput, AccountState},
+    zisk_compute_budget::{ZisKComputeTracker, ComputeOperation},
+    zisk_rbpf_bridge::ZisKBpfExecutor,
+    account_serialization_fixes::ZisKAccountSerializer,
+    transaction_parsing_fixes::ZisKTransactionParser,
+};
 use solana_sdk::{
-    transaction::Transaction,
     pubkey::Pubkey,
-    instruction::CompiledInstruction,
+    hash::Hash,
+    transaction::Transaction,
     message::Message,
+    instruction::CompiledInstruction,
     signature::Signature,
-    signer::Signer,
 };
-use ed25519_dalek::{VerifyingKey, Verifier};
-use solana_transaction_status::{
-    EncodedConfirmedTransactionWithStatusMeta,
-    EncodedTransaction,
-    UiTransactionEncoding,
-};
+use solana_transaction_status::EncodedConfirmedTransactionWithStatusMeta;
 use solana_account_decoder::UiAccount;
 use anyhow::{Result, Context};
 use std::collections::HashMap;

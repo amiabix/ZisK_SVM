@@ -1,81 +1,108 @@
-//! ZisK zkVM Integration Constants
+//! ZisK Constants and Error Types
 //! 
-//! This module contains constants and types used for integrating Solana programs
-//! with the ZisK zero-knowledge virtual machine.
+//! This module provides centralized error handling and constants
+//! for the ZisK Solana integration system.
 
+use thiserror::Error;
+use solana_sdk::pubkey::Pubkey;
 
+/// Comprehensive error types for ZisK operations
+#[derive(Debug, Clone, Error)]
+pub enum ZisKError {
+    // BPF execution errors
+    #[error("BPF execution error: {0}")]
+    BpfExecutionError(String),
+    
+    #[error("BPF load error: {0}")]
+    BpfLoadError(String),
+    
+    #[error("BPF verification error: {0}")]
+    BpfVerificationError(String),
+    
+    // Memory and system errors
+    #[error("Memory mapping error: {0}")]
+    MemoryMappingError(String),
+    
+    #[error("Memory limit exceeded: {0}")]
+    MemoryLimitExceeded(String),
+    
+    #[error("Stack overflow")]
+    StackOverflow,
+    
+    #[error("Account data too large: {0} bytes")]
+    AccountDataTooLarge(usize),
+    
+    #[error("Account data bounds error")]
+    AccountDataBoundsError,
+    
+    // Transaction and account errors
+    #[error("Transaction parse error: {0}")]
+    TransactionParseError(String),
+    
+    #[error("Account parse error: {0}")]
+    AccountParseError(String),
+    
+    #[error("Account validation error: {0}")]
+    AccountValidationError(String),
+    
+    #[error("Account not found: {0}")]
+    AccountNotFound(Pubkey),
+    
+    #[error("Account already exists: {0}")]
+    AccountAlreadyExists(Pubkey),
+    
+    // State management errors
+    #[error("No checkpoint available for rollback")]
+    NoCheckpointAvailable,
+    
+    #[error("Compute budget exceeded")]
+    ComputeBudgetExceeded,
+    
+    #[error("Insufficient rent balance: required {required}, provided {provided}")]
+    InsufficientRentBalance { required: u64, provided: u64 },
+    
+    // Generic errors
+    #[error("Generic error: {0}")]
+    Generic(String),
+}
 
+/// Global cycle counter for ZisK operations
+pub static mut OP_CYCLES: u64 = 0;
 
+/// ZisK memory constraints
+pub const ZISK_MAX_HEAP_SIZE: usize = 64 * 1024 * 1024; // 64MB
+pub const ZISK_MAX_STACK_SIZE: usize = 8 * 1024 * 1024;  // 8MB
+pub const ZISK_MAX_ACCOUNT_DATA: usize = 10 * 1024 * 1024; // 10MB
 
+/// Solana compute unit limits
+pub const SOLANA_MAX_COMPUTE_UNITS: u64 = 1_400_000;
+pub const SOLANA_MIN_COMPUTE_UNITS: u64 = 200_000;
 
+/// BPF program limits
+pub const BPF_MAX_INSTRUCTION_COUNT: u64 = 1_000_000;
+pub const BPF_MAX_CALL_DEPTH: u32 = 64;
 
-/// BPF instruction cycle costs for ZisK integration
-/// These values are optimized for ZisK zkVM constraints
-pub const OP_CYCLES: [u32; 256] = {
-    let mut cycles = [1; 256]; // Default to 1 cycle
-    
-    // Load/Store operations - higher cost due to memory access
-    cycles[0x30] = 3; // LdAbsB
-    cycles[0x28] = 3; // LdAbsH
-    cycles[0x20] = 3; // LdAbsW
-    cycles[0x18] = 3; // LdAbsDw
-    cycles[0x50] = 4; // LdIndB
-    cycles[0x48] = 4; // LdIndH
-    cycles[0x40] = 4; // LdIndW
-    cycles[0x38] = 4; // LdIndDw
-    
-    // Register operations
-    cycles[0x61] = 1; // LdReg
-    cycles[0x62] = 1; // StReg
-    cycles[0x63] = 1; // StRegImm
-    
-    // Arithmetic operations
-    cycles[0x0F] = 2; // AddReg
-    cycles[0x1F] = 2; // SubReg
-    cycles[0x2F] = 3; // MulReg
-    cycles[0x3F] = 4; // DivReg
-    cycles[0x9F] = 4; // ModReg
-    cycles[0x07] = 2; // AddImm
-    cycles[0x17] = 2; // SubImm
-    cycles[0x27] = 3; // MulImm
-    cycles[0x37] = 4; // DivImm
-    cycles[0x97] = 4; // ModImm
-    
-    // Bitwise operations
-    cycles[0x5F] = 1; // AndReg
-    cycles[0x6F] = 1; // OrReg
-    cycles[0x7F] = 1; // XorReg
-    cycles[0x6C] = 2; // LshReg
-    cycles[0x7C] = 2; // RshReg
-    cycles[0x54] = 1; // AndImm
-    cycles[0x64] = 1; // OrImm
-    cycles[0x74] = 1; // XorImm
-    cycles[0x6D] = 2; // LshImm
-    cycles[0x7D] = 2; // RshImm
-    
-    // Comparison operations
-    cycles[0x1D] = 1; // JeqReg
-    cycles[0x5D] = 1; // JneReg
-    cycles[0x2D] = 1; // JgtReg
-    cycles[0x3D] = 1; // JgeReg
-    cycles[0xAD] = 1; // JltReg
-    cycles[0xBD] = 1; // JleReg
-    cycles[0x15] = 1; // JeqImm
-    cycles[0x55] = 1; // JneImm
-    cycles[0x25] = 1; // JgtImm
-    cycles[0x35] = 1; // JgeImm
-    cycles[0xA5] = 1; // JltImm
-    cycles[0xB5] = 1; // JleImm
-    
-    // Control flow
-    cycles[0x05] = 1; // Ja
-    cycles[0x85] = 2; // Call
-    cycles[0x95] = 1; // Exit
-    
-    // Solana-specific operations
-    cycles[0xE0] = 5; // SolCall
-    cycles[0xE1] = 2; // SolLog
-    cycles[0xE2] = 2; // SolReturn
-    
-    cycles
-};
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_error_creation() {
+        let error = ZisKError::BpfExecutionError("Test error".to_string());
+        assert!(error.to_string().contains("Test error"));
+    }
+
+    #[test]
+    fn test_pubkey_error() {
+        let pubkey = Pubkey::new_unique();
+        let error = ZisKError::AccountNotFound(pubkey);
+        assert!(error.to_string().contains("Account not found"));
+    }
+
+    #[test]
+    fn test_rent_balance_error() {
+        let error = ZisKError::InsufficientRentBalance { required: 1000, provided: 500 };
+        assert!(error.to_string().contains("required 1000"));
+        assert!(error.to_string().contains("provided 500"));
+    }
+}

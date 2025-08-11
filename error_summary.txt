@@ -1,0 +1,57 @@
+      1 src/zisk_syscalls.rs:131:59: error[E0133]: call to unsafe function `std::ptr::const_ptr::<impl *const T>::add` is unsafe and requires unsafe function or block: call to unsafe function
+      1 src/zisk_state_manager.rs:67:13: error[E0282]: type annotations needed
+      1 src/zisk_state_manager.rs:431:20: error[E0308]: mismatched types: expected `String`, found `__Pubkey`
+      1 src/zisk_state_manager.rs:414:26: error[E0599]: no method named `is_empty` found for struct `Pubkey` in the current scope: method not found in `Pubkey`
+      1 src/zisk_state_manager.rs:410:27: error[E0599]: no method named `is_empty` found for struct `Pubkey` in the current scope: method not found in `Pubkey`
+      1 src/zisk_state_manager.rs:402:20: error[E0308]: mismatched types: expected `__Pubkey`, found `String`
+      1 src/zisk_state_manager.rs:399:13: error[E0308]: mismatched types: expected `__Pubkey`, found `String`
+      1 src/zisk_state_manager.rs:398:9: error[E0063]: missing field `rent_exempt_reserve` in initializer of `AccountState`: missing `rent_exempt_reserve`
+      1 src/zisk_state_manager.rs:267:55: error[E0277]: can't compare `std::string::String` with `Pubkey`: no implementation for `std::string::String == Pubkey`
+      1 src/zisk_state_manager.rs:26:20: error[E0308]: mismatched types: expected `String`, found `__Pubkey`
+      1 src/zisk_state_manager.rs:260:39: error[E0277]: can't compare `std::string::String` with `Pubkey`: no implementation for `std::string::String == Pubkey`
+      1 src/zisk_state_manager.rs:153:24: error[E0308]: mismatched types: expected `__Pubkey`, found `String`
+      1 src/zisk_state_manager.rs:150:25: error[E0308]: mismatched types: expected `__Pubkey`, found `String`
+      1 src/zisk_state_manager.rs:149:58: error[E0063]: missing field `rent_exempt_reserve` in initializer of `AccountState`: missing `rent_exempt_reserve`
+      1 src/zisk_state_manager.rs:115:24: error[E0308]: mismatched types: expected `__Pubkey`, found `String`
+      1 src/zisk_state_manager.rs:112:17: error[E0308]: mismatched types: expected `__Pubkey`, found `String`
+      1 src/zisk_state_manager.rs:111:58: error[E0063]: missing field `rent_exempt_reserve` in initializer of `AccountState`: missing `rent_exempt_reserve`
+      1 src/zisk_rbpf_bridge.rs:93:13: error[E0560]: struct `solana_rbpf::vm::Config` has no field named `enable_sdiv`: `solana_rbpf::vm::Config` does not have this field
+      1 src/zisk_rbpf_bridge.rs:92:13: error[E0560]: struct `solana_rbpf::vm::Config` has no field named `dynamic_stack_frames`: `solana_rbpf::vm::Config` does not have this field
+      1 src/zisk_rbpf_bridge.rs:386:41: error[E0689]: can't call method `saturating_sub` on ambiguous numeric type `{integer}`
+      1 src/zisk_rbpf_bridge.rs:222:30: error[E0061]: this function takes 3 arguments but 2 arguments were supplied
+      1 src/zisk_rbpf_bridge.rs:175:30: error[E0061]: this function takes 3 arguments but 2 arguments were supplied
+      1 src/zisk_rbpf_bridge.rs:114:30: error[E0061]: this function takes 2 arguments but 4 arguments were supplied
+      1 src/zisk_proof_schema.rs:489:20: error[E0308]: mismatched types: expected `__Pubkey`, found `String`
+      1 src/zisk_proof_schema.rs:488:21: error[E0308]: mismatched types: expected `__Pubkey`, found `String`
+      1 src/zisk_proof_schema.rs:440:56: error[E0599]: no method named `unwrap_or_default` found for struct `DecodeBuilder` in the current scope: method not found in `DecodeBuilder<'static, &std::string::String>`
+      1 src/zisk_proof_schema.rs:433:25: error[E0308]: mismatched types: expected `zisk_proof_schema::TransactionHeader`, found `real_solana_parser::TransactionHeader`
+      1 src/zisk_proof_schema.rs:338:30: error[E0599]: no method named `is_empty` found for struct `Pubkey` in the current scope: method not found in `Pubkey`
+      1 src/zisk_proof_schema.rs:334:31: error[E0599]: no method named `is_empty` found for struct `Pubkey` in the current scope: method not found in `Pubkey`
+      1 src/zisk_memory_manager.rs:281:9: error[E0596]: cannot borrow `*self.memory_manager` as mutable, as it is behind a `&` reference: `self` is a `&` reference, so the data it refers to cannot be borrowed as mutable
+      1 src/zisk_memory_manager.rs:238:9: error[E0596]: cannot borrow `*self.memory_manager` as mutable, as it is behind a `&` reference: `self` is a `&` reference, so the data it refers to cannot be borrowed as mutable
+      1 src/zisk_cpi.rs:410:35: error[E0716]: temporary value dropped while borrowed: creates a temporary value which is freed while still in use
+      1 src/zisk_cpi.rs:387:60: error[E0277]: `EncodeBuilder<'_, &[u8; 32]>` doesn't implement `std::fmt::Display`: `EncodeBuilder<'_, &[u8; 32]>` cannot be formatted with the default formatter
+      1 src/zisk_cpi.rs:326:74: error[E0599]: no method named `to_solana_account` found for reference `&zisk_cpi::AccountInfo` in the current scope: method not found in `&zisk_cpi::AccountInfo`
+      1 src/zisk_cpi.rs:326:30: error[E0599]: no method named `update_from_solana_account` found for mutable reference `&mut zisk_cpi::AccountInfo` in the current scope: method not found in `&mut zisk_cpi::AccountInfo`
+      1 src/zisk_cpi.rs:227:66: error[E0277]: `EncodeBuilder<'_, [u8; 32]>` doesn't implement `std::fmt::Display`: `EncodeBuilder<'_, [u8; 32]>` cannot be formatted with the default formatter
+      1 src/zisk_cpi.rs:222:70: error[E0277]: `EncodeBuilder<'_, [u8; 32]>` doesn't implement `std::fmt::Display`: `EncodeBuilder<'_, [u8; 32]>` cannot be formatted with the default formatter
+      1 src/transaction_parsing_fixes.rs:318:13: error[E0560]: struct `zisk_proof_schema::ZisKSolanaInput` has no field named `recent_blockhash`: `zisk_proof_schema::ZisKSolanaInput` does not have this field
+      1 src/transaction_parsing_fixes.rs:317:13: error[E0560]: struct `zisk_proof_schema::ZisKSolanaInput` has no field named `instructions`: `zisk_proof_schema::ZisKSolanaInput` does not have this field
+      1 src/transaction_parsing_fixes.rs:316:13: error[E0560]: struct `zisk_proof_schema::ZisKSolanaInput` has no field named `account_keys`: `zisk_proof_schema::ZisKSolanaInput` does not have this field
+      1 src/transaction_parsing_fixes.rs:315:13: error[E0560]: struct `zisk_proof_schema::ZisKSolanaInput` has no field named `transaction_signature`: `zisk_proof_schema::ZisKSolanaInput` does not have this field
+      1 src/solana_executor.rs:629:20: error[E0599]: no method named `verify` found for struct `VerifyingKey` in the current scope: method not found in `VerifyingKey`
+      1 src/solana_executor.rs:155:22: error[E0308]: arguments to this method are incorrect
+      1 src/solana_executor.rs:154:13: error[E0308]: mismatched types: expected `EncodedTransactionWithStatusMeta`, found `EncodedTransaction`
+      1 src/solana_executor.rs:151:13: error[E0308]: mismatched types: expected `EncodedTransactionWithStatusMeta`, found `EncodedTransaction`
+      1 src/solana_executor.rs:139:40: error[E0308]: mismatched types: expected `&...`, found `&EncodedTransactionWithStatusMeta`
+      1 src/real_solana_parser.rs:232:22: error[E0308]: arguments to this method are incorrect
+      1 src/real_solana_parser.rs:231:13: error[E0308]: mismatched types: expected `EncodedTransactionWithStatusMeta`, found `EncodedTransaction`
+      1 src/real_solana_parser.rs:228:13: error[E0308]: mismatched types: expected `EncodedTransactionWithStatusMeta`, found `EncodedTransaction`
+      1 src/real_solana_parser.rs:216:40: error[E0308]: mismatched types: expected `&...`, found `&EncodedTransactionWithStatusMeta`
+      1 src/real_bpf_loader.rs:82:11: error[E0599]: the method `context` exists for enum `std::result::Result<Executable<TestContextObject>, EbpfError>`, but its trait bounds were not satisfied: method cannot be called due to unsatisfied trait bounds
+      1 src/real_bpf_loader.rs:81:13: error[E0308]: mismatched types: expected `Arc<BuiltinProgram<TestContextObject>>`, found `&mut FunctionRegistry<TestContextObject>`
+      1 src/real_bpf_loader.rs:172:47: error[E0308]: mismatched types: expected `&Executable<ZisKContextObject>`, found `&Executable<TestContextObject>`
+      1 src/lib.rs:50:1: error[E0308]: mismatched types: expected "Rust" fn, found "C" fn
+      1 src/bpf_interpreter.rs:396:38: error[E0608]: cannot index into a value of type `u64`
+      1 src/account_serialization_fixes.rs:69:12: error[E0063]: missing field `rent_exempt_reserve` in initializer of `AccountState`: missing `rent_exempt_reserve`
+      1 src/account_serialization_fixes.rs:24:9: error[E0063]: missing field `rent_exempt_reserve` in initializer of `AccountState`: missing `rent_exempt_reserve`

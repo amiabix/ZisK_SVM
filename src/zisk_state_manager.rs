@@ -5,6 +5,7 @@
 //! account snapshots, checkpoint management, and automatic rollback on failures.
 
 use std::collections::HashMap;
+use std::str::FromStr;
 use crate::zisk_proof_schema::AccountState;
 use anyhow::{Result, anyhow};
 
@@ -13,7 +14,7 @@ use anyhow::{Result, anyhow};
 pub struct AccountSnapshot {
     pub lamports: u64,
     pub data: Vec<u8>,
-    pub owner: String, // Using String instead of Pubkey for compatibility
+    pub owner: solana_sdk::pubkey::Pubkey, // Using Pubkey for consistency
     pub executable: bool,
     pub rent_epoch: u64,
 }
@@ -23,7 +24,7 @@ impl From<&AccountState> for AccountSnapshot {
         Self {
             lamports: account.lamports,
             data: account.data.clone(),
-            owner: account.owner.clone(),
+            owner: account.owner, // Pubkey implements Copy
             executable: account.executable,
             rent_epoch: account.rent_epoch,
         }
@@ -109,12 +110,13 @@ impl ZisKTransactionContext {
         self.current_accounts.clear();
         for (pubkey, snapshot) in checkpoint.accounts {
             self.current_accounts.insert(pubkey.clone(), AccountState {
-                pubkey,
+                pubkey: solana_sdk::pubkey::Pubkey::from_str(&pubkey).unwrap_or_default(),
                 lamports: snapshot.lamports,
                 data: snapshot.data,
                 owner: snapshot.owner,
                 executable: snapshot.executable,
                 rent_epoch: snapshot.rent_epoch,
+                rent_exempt_reserve: 0, // Default value
             });
         }
 
@@ -364,6 +366,15 @@ pub enum ZisKError {
     
     #[error("Memory mapping error: {0}")]
     MemoryMappingError(String),
+    
+    #[error("Transaction parse error: {0}")]
+    TransactionParseError(String),
+    
+    #[error("Account parse error: {0}")]
+    AccountParseError(String),
+    
+    #[error("Account validation error: {0}")]
+    AccountValidationError(String),
 }
 
 /// Integration with Solana executor
@@ -398,11 +409,11 @@ impl ZisKStateUtilities {
 
     /// Validate account state consistency
     pub fn validate_account_consistency(account: &AccountState) -> Result<(), ZisKError> {
-        if account.pubkey.is_empty() {
+        if account.pubkey == solana_sdk::pubkey::Pubkey::default() {
             return Err(ZisKError::StateCorruption);
         }
         
-        if account.owner.is_empty() {
+        if account.owner == solana_sdk::pubkey::Pubkey::default() {
             return Err(ZisKError::StateCorruption);
         }
 
@@ -429,16 +440,18 @@ impl ZisKStateUtilities {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use solana_sdk::pubkey::Pubkey;
 
     #[test]
     fn test_account_snapshot_creation() {
         let account = AccountState {
-            pubkey: "test_account".to_string(),
+            pubkey: solana_sdk::pubkey::Pubkey::new_unique(),
             lamports: 1000,
             data: vec![1, 2, 3],
-            owner: "test_owner".to_string(),
+            owner: solana_sdk::pubkey::Pubkey::new_unique(),
             executable: false,
             rent_epoch: 0,
+            rent_exempt_reserve: 0,
         };
 
         let snapshot = AccountSnapshot::from(&account);

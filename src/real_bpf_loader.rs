@@ -11,6 +11,10 @@
 //! 
 //! Based on official Solana RBPF crate: https://github.com/solana-labs/rbpf
 
+#![allow(unused_imports)]
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use solana_rbpf::{
     ebpf,
     elf::Executable,

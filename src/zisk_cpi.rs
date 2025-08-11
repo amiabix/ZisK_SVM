@@ -6,6 +6,8 @@
 use crate::zisk_memory_manager::{ZisKMemoryManager, ZisKMemoryConstraints};
 use anyhow::{Result, anyhow};
 use std::collections::HashMap;
+use sha2::{Sha256, Digest};
+use bs58;
 
 /// Program execution context for CPI calls
 #[derive(Debug, Clone)]
@@ -323,7 +325,7 @@ impl ZisKCpiContext {
             if let Some(updated_account) = bpf_context.accounts.get(i) {
                 // Update the borrowed account
                 if let Some(borrowed) = self.borrowed_accounts.get_mut(&account_info.key) {
-                    borrowed.update_from_solana_account(&updated_account.to_solana_account());
+                    borrowed.update_from_account_data(&updated_account.data)?;
                 }
             }
         }

@@ -9,6 +9,7 @@ use crate::real_solana_parser::RealSolanaTransaction;
 use anyhow::{Result, anyhow};
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
+use solana_sdk::pubkey::Pubkey;
 
 /// Input to ZisK proving system for Solana transaction execution
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,7 +41,7 @@ pub struct EncodedTransaction {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransactionMessage {
     /// Transaction header
-    pub header: TransactionHeader,
+    pub header: MessageHeader,
     /// Account keys involved in transaction
     pub account_keys: Vec<String>,
     /// Recent blockhash
@@ -51,7 +52,7 @@ pub struct TransactionMessage {
 
 /// Transaction header
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TransactionHeader {
+pub struct MessageHeader {
     /// Number of required signatures
     pub num_required_signatures: u8,
     /// Number of read-only signed accounts
@@ -59,6 +60,8 @@ pub struct TransactionHeader {
     /// Number of read-only unsigned accounts
     pub num_readonly_unsigned_accounts: u8,
 }
+
+
 
 /// Compiled instruction
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -94,9 +97,9 @@ pub struct TransactionMeta {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AccountState {
     /// Account public key
-    pub pubkey: String,
+    pub pubkey: solana_sdk::pubkey::Pubkey,
     /// Account owner
-    pub owner: String,
+    pub owner: solana_sdk::pubkey::Pubkey,
     /// Account lamports
     pub lamports: u64,
     /// Whether account is executable
@@ -330,12 +333,12 @@ impl ZisKProofValidator {
     /// Validate account states
     fn validate_account_states(account_states: &[AccountState]) -> Result<()> {
         for (i, account) in account_states.iter().enumerate() {
-            if account.pubkey.is_empty() {
-                return Err(anyhow!("Account {} has empty public key", i));
+            if account.pubkey == solana_sdk::pubkey::Pubkey::default() {
+                return Err(anyhow!("Account {} has default public key", i));
             }
             
-            if account.owner.is_empty() {
-                return Err(anyhow!("Account {} has empty owner", i));
+            if account.owner == solana_sdk::pubkey::Pubkey::default() {
+                return Err(anyhow!("Account {} has default owner", i));
             }
         }
         
