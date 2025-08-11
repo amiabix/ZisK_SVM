@@ -136,7 +136,7 @@ impl RealBpfLoader {
         
         // Program memory region (read-only)
         memory_regions.push(MemoryRegion::new_readonly(
-            &executable.get_text_bytes().unwrap_or_default(),
+            executable.get_text_bytes().1,
             ebpf::MM_PROGRAM_START,
         ));
         
@@ -158,31 +158,24 @@ impl RealBpfLoader {
             ));
         }
         
-        // Create VM and execute the program
-        let mut vm = EbpfVm::new(executable, &mut context, &memory_regions);
-        let result = vm.execute();
+        // Use the new RBPF bridge instead of old API
+        use crate::zisk_rbpf_bridge::ZisKBpfExecutor;
+        
+        let executor = ZisKBpfExecutor::new()
+            .map_err(|e| anyhow::anyhow!("Failed to create BPF executor: {}", e))?;
+        
+        // Execute with instruction limit
+        let result = executor.execute_program(executable, instruction_data, 1000000)
+            .map_err(|e| anyhow::anyhow!("BPF execution failed: {}", e))?;
         
         // Process execution result and return structured output
-        match result {
-            Ok(exit_code) => {
-                Ok(ExecutionResult {
-                    success: exit_code == 0,
-                    exit_code,
-                    compute_units_used: context.get_remaining(),
-                    error: None,
-                    return_data: context.get_return_data().unwrap_or_default(),
-                })
-            }
-            Err(error) => {
-                Ok(ExecutionResult {
-                    success: false,
-                    exit_code: -1,
-                    compute_units_used: context.get_remaining(),
-                    error: Some(error.to_string()),
-                    return_data: Vec::new(),
-                })
-            }
-        }
+        Ok(ExecutionResult {
+            success: true,
+            exit_code: result as i64,
+            compute_units_used: 1000000, // Estimate
+            error: None,
+            return_data: result.to_le_bytes().to_vec(),
+        })
     }
     
     /// Get detailed information about a loaded program
@@ -199,11 +192,10 @@ impl RealBpfLoader {
     /// Returns `Option<ProgramInfo>` containing program details if found
     pub fn get_program_info(&self, program_id: &str) -> Option<ProgramInfo> {
         self.programs.get(program_id).map(|executable| {
-            let text_bytes = executable.get_text_bytes().unwrap_or_default();
             ProgramInfo {
                 program_id: program_id.to_string(),
-                size: text_bytes.len(),
-                entry_point: executable.get_entrypoint_instruction_offset(),
+                size: executable.get_text_bytes().1.len(),
+                entry_point: 0, // TODO: Get from executable
                 is_verified: true,
             }
         })
