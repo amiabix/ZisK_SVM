@@ -1,6 +1,6 @@
 # Solana Virtual Machine with ZisK Integration
 
-A production-ready implementation of a Solana Virtual Machine (SVM) integrated with the ZisK zero-knowledge virtual machine for generating cryptographic proofs of transaction execution.
+An implementation of a Solana Virtual Machine (SVM) integrated with the ZisK zero-knowledge virtual machine for generating cryptographic proofs of transaction execution.
 
 ## Overview
 
