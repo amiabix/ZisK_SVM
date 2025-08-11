@@ -5,11 +5,13 @@
 //! for Solana account data processing.
 
 use solana_sdk::{
+    account::{Account, AccountSharedData},
     pubkey::Pubkey,
-    account::Account,
     rent::Rent,
 };
-use crate::{zisk_state_manager::ZisKError, zisk_proof_schema::AccountState};
+use serde::{Deserialize, Serialize};
+use crate::zisk_state_manager::{AccountState, ZisKError};
+use base64::{Engine as _, engine::general_purpose};
 use std::str::FromStr;
 
 /// Account serialization utilities with proper type conversions
@@ -161,7 +163,7 @@ impl ZisKAccountSerializer {
                             if let Some(encoding) = arr.get(1).and_then(|v| v.as_str()) {
                                 match encoding {
                                     "base64" | "base64+zstd" => {
-                                        base64::decode(data_str)
+                                        general_purpose::STANDARD_NO_PAD.decode(data_str)
                                             .map_err(|e| ZisKError::AccountParseError(format!("Base64 decode error: {}", e)))
                                     }
                                     "jsonParsed" => {
@@ -174,7 +176,7 @@ impl ZisKAccountSerializer {
                                 }
                             } else {
                                 // Default to base64
-                                base64::decode(data_str)
+                                general_purpose::STANDARD_NO_PAD.decode(data_str)
                                     .map_err(|e| ZisKError::AccountParseError(format!("Base64 decode error: {}", e)))
                             }
                         } else {
@@ -183,7 +185,7 @@ impl ZisKAccountSerializer {
                     }
                     // Handle string format (assume base64)
                     serde_json::Value::String(data_str) => {
-                        base64::decode(data_str)
+                        general_purpose::STANDARD_NO_PAD.decode(data_str)
                             .map_err(|e| ZisKError::AccountParseError(format!("Base64 decode error: {}", e)))
                     }
                     // Handle object format (parsed data)

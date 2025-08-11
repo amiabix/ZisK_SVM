@@ -4,6 +4,7 @@
 //! multiple Solana SDK versions and resolves type compatibility issues
 //! between different response formats.
 
+use base64::Engine;
 use solana_sdk::{
     message::{Message, VersionedMessage},
     transaction::{VersionedTransaction, Transaction},

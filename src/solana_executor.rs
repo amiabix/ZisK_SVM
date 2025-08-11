@@ -161,7 +161,7 @@ impl SolanaExecutionEnvironment {
             logs: Vec::new(),
             return_data: None,
             error: None,
-            bpf_loader: crate::real_bpf_loader::RealBpfLoader::new(),
+            bpf_loader: crate::real_bpf_loader::RealBpfLoader::new()?,
         })
     }
     
@@ -197,7 +197,7 @@ impl SolanaExecutionEnvironment {
             }
             EncodedTransaction::Binary(base64_str, TransactionBinaryEncoding::Base64) => {
                 // Handle Base64 binary transactions
-                let decoded_data = base64::decode(base64_str)
+                let decoded_data = base64::engine::general_purpose::STANDARD.decode(base64_str)
                     .context("Failed to decode base64 transaction data")?;
                 self.parse_raw_binary_transaction(&decoded_data, meta)
             }
@@ -252,7 +252,7 @@ impl SolanaExecutionEnvironment {
             }
             solana_transaction_status::UiTransactionEncoding::Base64 => {
                 // Decode base64 data first, then parse as binary
-                let decoded_data = base64::decode(data)
+                let decoded_data = base64::engine::general_purpose::STANDARD.decode(data)
                     .context("Failed to decode base64 binary data")?;
                 self.parse_raw_binary_transaction(&decoded_data, meta)
             }
@@ -442,7 +442,7 @@ impl SolanaExecutionEnvironment {
         match encoding {
             solana_transaction_status::UiTransactionEncoding::Base64 => {
                 // Decode base64 data and parse as binary
-                let decoded_data = base64::decode(data)
+                let decoded_data = base64::engine::general_purpose::STANDARD.decode(data)
                     .context("Failed to decode base64 transaction data")?;
                 self.parse_raw_binary_transaction(&decoded_data, meta)
             }

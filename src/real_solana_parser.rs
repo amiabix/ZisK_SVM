@@ -6,22 +6,10 @@
 //! Based on official Solana RBPF crate: https://github.com/solana-labs/rbpf
 
 use serde::{Deserialize, Serialize};
-use solana_sdk::{
-    transaction::Transaction,
-    pubkey::Pubkey,
-    instruction::CompiledInstruction,
-    message::Message,
-    signature::Signature,
-    signer::Signer,
-};
+use base64::{Engine as _, engine::general_purpose};
 use solana_transaction_status::{
     EncodedConfirmedTransactionWithStatusMeta,
-    EncodedTransactionWithStatusMeta,
     EncodedTransaction,
-    UiTransactionEncoding,
-    UiTransaction,
-    UiMessage,
-    UiTransactionStatusMeta,
     TransactionBinaryEncoding,
 };
 use solana_account_decoder::UiAccount;
@@ -269,7 +257,7 @@ impl RealSolanaParser {
             }
             EncodedTransaction::Binary(base64_str, TransactionBinaryEncoding::Base64) => {
                 // Handle Base64 binary transactions
-                let decoded_data = base64::decode(base64_str)
+                let decoded_data = general_purpose::STANDARD.decode(base64_str)
                     .context("Failed to decode base64 transaction data")?;
                 self.parse_raw_binary_transaction(&decoded_data, meta)
             }
@@ -376,7 +364,7 @@ impl RealSolanaParser {
             }
             solana_transaction_status::UiTransactionEncoding::Base64 => {
                 // Decode base64 data first, then parse as binary
-                let decoded_data = base64::decode(data)
+                let decoded_data = general_purpose::STANDARD.decode(data)
                     .context("Failed to decode base64 binary data")?;
                 self.parse_raw_binary_transaction(&decoded_data, meta)
             }
@@ -412,7 +400,7 @@ impl RealSolanaParser {
         match encoding {
             solana_transaction_status::UiTransactionEncoding::Base64 => {
                 // Decode base64 data and parse as binary
-                let decoded_data = base64::decode(data)
+                let decoded_data = general_purpose::STANDARD.decode(data)
                     .context("Failed to decode base64 transaction data")?;
                 self.parse_raw_binary_transaction(&decoded_data, meta)
             }
