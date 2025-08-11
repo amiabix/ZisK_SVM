@@ -35,7 +35,7 @@ pub use zisk_compute_budget::{ZisKComputeTracker, ComputeOperation};
 use ziskos::entrypoint;
 
 #[no_mangle]
-pub extern "C" fn main() {
+pub fn main() {
     match run_zisk_solana_execution() {
         Ok(_) => {
             // Success - output results for proof

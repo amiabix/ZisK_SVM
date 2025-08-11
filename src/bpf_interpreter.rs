@@ -12,7 +12,7 @@
 //! - Error handling and rollback
 
 use std::collections::HashMap;
-use crate::constants::OP_CYCLES;
+// use crate::constants::OP_CYCLES; // Commented out for now
 
 // ZisK-specific optimizations - using standard assertions for now
 // TODO: Replace with actual ZisK-specific assertions when available
@@ -392,8 +392,32 @@ impl BpfInterpreter {
     
     pub fn execute_instruction(&mut self, instruction: &BpfInstruction) -> Result<bool, String> {
         // ZisK cycle accounting
-        let opcode = instruction.opcode as usize;
-        let cycles_needed = OP_CYCLES[opcode];
+        let cycles_needed = match instruction.opcode {
+            // Load operations
+            0x30 | 0x28 | 0x20 | 0x18 => 1, // LdAbs operations
+            0x61 => 1, // LdReg
+            
+            // Store operations
+            0x62 | 0x63 => 1, // StReg operations
+            
+            // Arithmetic operations
+            0x0F | 0x1F | 0x2F | 0x3F => 2, // Add, Sub, Mul, Div
+            
+            // Comparison and jumps
+            0x15 | 0x55 => 1, // JeqImm, JneImm
+            0x05 => 1, // Ja
+            
+            // Control flow
+            0x85 => 3, // Call
+            0x95 => 1, // Exit
+            
+            // Solana-specific operations
+            0xE0 => 5, // SolCall
+            0xE1 => 1, // SolLog
+            0xE2 => 1, // SolReturn
+            
+            _ => 1, // Default cycle cost
+        };
         
         // Cycle validation for ZisK compatibility
         if self.context.cycles_remaining < cycles_needed {

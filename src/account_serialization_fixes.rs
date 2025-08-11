@@ -21,7 +21,6 @@ impl ZisKAccountSerializer {
         pubkey: &Pubkey,
         account: &Account,
     ) -> AccountState {
-            rent_exempt_reserve: 0,
         AccountState {
             rent_exempt_reserve: 0,
             pubkey: *pubkey,
@@ -30,7 +29,6 @@ impl ZisKAccountSerializer {
             owner: account.owner,
             executable: account.executable,
             rent_epoch: account.rent_epoch,
-            rent_exempt_reserve: 0, // Default value
         }
     }
 
@@ -77,7 +75,6 @@ impl ZisKAccountSerializer {
             owner,
             executable,
             rent_epoch,
-            rent_exempt_reserve: 0, // Default value
         })
     }
 

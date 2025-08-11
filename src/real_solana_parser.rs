@@ -22,6 +22,7 @@ use solana_transaction_status::{
     UiTransaction,
     UiMessage,
     UiTransactionStatusMeta,
+    TransactionBinaryEncoding,
 };
 use solana_account_decoder::UiAccount;
 use anyhow::{Result, Context};
@@ -249,7 +250,8 @@ impl RealSolanaParser {
     /// Parse a real Solana transaction from JSON RPC response
     pub fn parse_transaction_from_json(&mut self, json_data: &str) -> Result<RealSolanaTransaction> {
         let transaction = self.parse_transaction_json(json_data)?;
-        self.parse_encoded_transaction(&transaction, None)
+        // Access meta from the correct path: transaction.transaction.meta
+        self.parse_encoded_transaction(&transaction, transaction.transaction.meta.as_ref())
     }
     
     /// Parse an encoded Solana transaction using SDK v2.3.7 structure
@@ -259,29 +261,35 @@ impl RealSolanaParser {
         meta: Option<&solana_transaction_status::UiTransactionStatusMeta>,
     ) -> Result<RealSolanaTransaction> {
         // Use the proper transaction structure from SDK v2.3.7
-        match &encoded_tx.transaction {
+        // encoded_tx.transaction -> EncodedTransactionWithStatusMeta
+        // encoded_tx.transaction.transaction -> EncodedTransaction (the enum)
+        match &encoded_tx.transaction.transaction {
             EncodedTransaction::Json(ui_transaction) => {
                 self.parse_ui_transaction(ui_transaction, meta)
             }
-            EncodedTransaction::Binary(encoding, data) => {
-                // Handle binary transactions with proper encoding
-                // data is already a string that needs to be decoded
-                match encoding {
-                    UiTransactionEncoding::Base64 => {
-                        // Decode base64 data
-                        let decoded_data = base64::decode(data)
-                            .context("Failed to decode base64 transaction data")?;
-                        self.parse_raw_binary_transaction(&decoded_data, meta)
-                    }
-                    UiTransactionEncoding::Base58 => {
-                        // Decode base58 data
-                        let decoded_data = bs58::decode(data)
-                            .into_vec()
-                            .context("Failed to decode base58 transaction data")?;
-                        self.parse_raw_binary_transaction(&decoded_data, meta)
-                    }
-                    _ => Err(anyhow::anyhow!("Unsupported binary encoding: {:?}", encoding)),
-                }
+            EncodedTransaction::Binary(base64_str, TransactionBinaryEncoding::Base64) => {
+                // Handle Base64 binary transactions
+                let decoded_data = base64::decode(base64_str)
+                    .context("Failed to decode base64 transaction data")?;
+                self.parse_raw_binary_transaction(&decoded_data, meta)
+            }
+            EncodedTransaction::Binary(base58_str, TransactionBinaryEncoding::Base58) => {
+                // Handle Base58 binary transactions
+                let decoded_data = bs58::decode(base58_str)
+                    .into_vec()
+                    .context("Failed to decode base58 transaction data")?;
+                self.parse_raw_binary_transaction(&decoded_data, meta)
+            }
+            EncodedTransaction::LegacyBinary(base58_str) => {
+                // Handle legacy binary transactions (Base58)
+                let decoded_data = bs58::decode(base58_str)
+                    .into_vec()
+                    .context("Failed to decode legacy base58 transaction data")?;
+                self.parse_raw_binary_transaction(&decoded_data, meta)
+            }
+            EncodedTransaction::Accounts(accounts) => {
+                // Handle accounts variant - convert to appropriate format
+                Err(anyhow::anyhow!("Accounts variant not yet implemented"))
             }
         }
     }
