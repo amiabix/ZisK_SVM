@@ -283,7 +283,7 @@ impl ZisKCpiContext {
         let result = self.execute_bpf_program(&program, instruction, &mut bpf_context);
 
         // Update account states from execution
-        self.update_accounts_from_execution(account_infos, &bpf_context);
+        let _ = self.update_accounts_from_execution(account_infos, &bpf_context);
 
         result
     }

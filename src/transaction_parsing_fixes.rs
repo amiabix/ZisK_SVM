@@ -6,8 +6,6 @@
 
 use base64::Engine;
 use solana_sdk::{
-    message::{Message, VersionedMessage},
-    transaction::{VersionedTransaction, Transaction},
     pubkey::Pubkey,
     hash::Hash,
 };

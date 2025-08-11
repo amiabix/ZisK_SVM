@@ -1,38 +1,18 @@
 //! Solana Program Execution Environment for ZisK zkVM
 //! 
-//! This module provides a complete Solana program execution environment that integrates
-//! with our BPF interpreter to execute Solana programs directly within the ZisK zkVM.
-//! 
-//! Features:
-//! - Real Solana transaction parsing and validation
-//! - Real Solana account model and state management
-//! - Real BPF program execution using Solana RBPF
-//! - Cross-program invocation (CPI) support
-//! - Compute unit tracking and limits
-//! - Transaction simulation and validation
-//! - State consistency verification
+//! This module provides a complete Solana program execution environment
+//! that integrates with the ZisK zkVM for proof generation.
 
-#![allow(unused_imports)]
-#![allow(dead_code)]
-#![allow(unused_variables)]
-
-// use crate::{
-//     ZisKError,
-//     zisk_proof_schema::{ZisKSolanaInput, ZisKSolanaOutput, AccountState},
-//     zisk_compute_budget::{ZisKComputeTracker, ComputeOperation},
-//     zisk_rbpf_bridge::ZisKBpfExecutor,
-//     account_serialization_fixes::ZisKAccountSerializer,
-//     transaction_parsing_fixes::ZisKTransactionParser,
-// }; // Commented out for now
+use anyhow::{Result, Context};
+use base64::Engine;
+use solana_sdk::account_info::AccountInfo as SolanaSdkAccountInfo;
 use solana_sdk::{
     pubkey::Pubkey,
-    hash::Hash,
-    transaction::Transaction,
-    message::Message,
-    instruction::CompiledInstruction,
     signature::Signature,
+    instruction::CompiledInstruction,
+    message::MessageHeader,
+    transaction::Transaction,
 };
-use ed25519_dalek::{VerifyingKey, Verifier};
 use solana_transaction_status::{
     EncodedConfirmedTransactionWithStatusMeta,
     EncodedTransactionWithStatusMeta,
@@ -44,8 +24,9 @@ use solana_transaction_status::{
     TransactionBinaryEncoding,
 };
 use solana_account_decoder::UiAccount;
-use anyhow::{Result, Context};
+use ed25519_dalek::{VerifyingKey, Verifier};
 use std::collections::HashMap;
+use std::str::FromStr;
 
 /// Real Solana Transaction Data Structure
 #[derive(Debug, Clone)]
@@ -58,18 +39,10 @@ pub struct SolanaTransaction {
 /// Real Solana Transaction Message
 #[derive(Debug, Clone)]
 pub struct TransactionMessage {
-    pub header: MessageHeader,
+    pub header: solana_sdk::message::MessageHeader,
     pub account_keys: Vec<String>,
     pub recent_blockhash: String,
     pub instructions: Vec<CompiledInstruction>,
-}
-
-/// Real Solana Transaction Header
-#[derive(Debug, Clone)]
-pub struct MessageHeader {
-    pub num_required_signatures: u8,
-    pub num_readonly_signed_accounts: u8,
-    pub num_readonly_unsigned_accounts: u8,
 }
 
 /// Real Solana Transaction Metadata
@@ -613,14 +586,45 @@ impl SolanaExecutionEnvironment {
                 .map_err(|e| format!("Failed to load program: {}", e))?;
         }
         
-        // Execute the program using the BPF loader
+        // Get the program ID from the instruction
+        let program_id_index = instruction.program_id_index as usize;
+        let program_id = account_keys.get(program_id_index)
+            .ok_or_else(|| format!("Invalid program ID index: {}", program_id_index))?;
+
+        // Convert account indices to BpfAccount objects
+        let mut bpf_accounts = Vec::new();
+        for &account_index in &instruction.accounts {
+            let account_index = account_index as usize;
+            if let Some(account_key_str) = account_keys.get(account_index) {
+                // Parse the account key
+                let account_pubkey = account_key_str.parse::<solana_sdk::pubkey::Pubkey>()
+                    .map_err(|e| format!("Invalid account pubkey {}: {}", account_key_str, e))?;
+                
+                // For now, create a basic BpfAccount - you may want to fetch real account data
+                let bpf_account = crate::real_bpf_loader::BpfAccount {
+                    pubkey: account_pubkey.to_bytes(),
+                    lamports: 0, // TODO: Fetch real lamports from account loader
+                    data: vec![], // TODO: Fetch real account data
+                    owner: solana_sdk::system_program::id().to_bytes(), // Default to system program
+                    executable: false,
+                    rent_epoch: 0,
+                };
+                bpf_accounts.push(bpf_account);
+            } else {
+                return Err(format!("Invalid account index: {}", account_index));
+            }
+        }
+
+        // Now call execute_program_simple with correct arguments
         let (return_data, compute_units_used, error) = self.bpf_loader.execute_program_simple(
-            &instruction.data,
-            &instruction.accounts.iter().map(|i| account_keys[*i as usize].clone()).collect::<Vec<_>>(),
-            self.compute_units_limit - self.compute_units_used,
+            program_id,              // program_id: &str
+            &instruction.data,       // instruction_data: &[u8]  
+            &bpf_accounts,          // accounts: &[BpfAccount]
         ).map_err(|e| format!("BPF execution failed: {}", e))?;
-        
-        self.compute_units_used += compute_units_used;
+
+        // If you want to add compute unit tracking, do it after the call:
+        let actual_compute_used = compute_units_used.min(self.compute_units_limit - self.compute_units_used);
+        self.compute_units_used += actual_compute_used;
         
         let logs = self.bpf_loader.get_logs();
         

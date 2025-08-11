@@ -5,12 +5,12 @@
 //! for Solana account data processing.
 
 use solana_sdk::{
-    account::{Account, AccountSharedData},
+    account::Account,
     pubkey::Pubkey,
     rent::Rent,
 };
-use serde::{Deserialize, Serialize};
-use crate::zisk_state_manager::{AccountState, ZisKError};
+use crate::zisk_state_manager::ZisKError;
+use crate::zisk_proof_schema::AccountState;  // Import directly from the source
 use base64::{Engine as _, engine::general_purpose};
 use std::str::FromStr;
 

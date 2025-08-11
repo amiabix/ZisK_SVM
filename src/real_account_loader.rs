@@ -3,8 +3,7 @@
 //! This module implements loading of actual Solana account states
 //! from the network using RPC calls.
 
-use serde::{Deserialize, Serialize};
-use solana_sdk::pubkey::Pubkey;
+use serde::Deserialize;
 use solana_account_decoder::UiAccount;
 use anyhow::{Result, Context};
 use std::collections::HashMap;

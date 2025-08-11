@@ -162,8 +162,8 @@ impl ZiskSvmContext {
         Ok(Self {
             memory_layout,
             cycles_consumed: 0,
-            svm,
-            bpf_loader,
+            svm: svm?,
+            bpf_loader: bpf_loader?,
             account_loader,
             proof_state,
         })
@@ -201,7 +201,7 @@ impl ZiskSvmContext {
         
         // Execute transaction in SVM
         let result = self.svm.execute_transaction(transaction)
-            .context("SVM execution failed")?;
+            .map_err(|e| anyhow::anyhow!("SVM execution failed: {}", e))?;
         
         // Record execution in proof state
         self.record_execution_result(&result)?;
@@ -399,8 +399,8 @@ impl Default for ZiskSvmContext {
                     available_size: ZISK_MEMORY_SIZE,
                 },
                 cycles_consumed: 0,
-                svm: SolanaExecutionEnvironment::new(200_000),
-                bpf_loader: RealBpfLoader::new(),
+                svm: SolanaExecutionEnvironment::new(200_000).unwrap(),
+                bpf_loader: RealBpfLoader::new().unwrap(),
                 account_loader: RealAccountLoader::new("https://api.mainnet-beta.solana.com".to_string()),
                 proof_state: ProofGenerationState {
                     enabled: true,

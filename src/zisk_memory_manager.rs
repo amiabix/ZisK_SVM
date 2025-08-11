@@ -61,7 +61,7 @@ struct MemoryRegion {
 
 /// Type of memory region
 #[derive(Debug, Clone)]
-enum RegionType {
+pub enum RegionType {
     Heap,
     Stack,
     Account,
