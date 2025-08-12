@@ -1,5 +1,21 @@
 # ZisK-SVM: Solana Program Execution in Zero-Knowledge
 
+┌─────────────────────┐
+│   ZisK Host         │  ← Your main.rs with ziskos::entrypoint!(main)
+│                     │
+│  ┌───────────────┐  │
+│  │ RISC-V Guest  │  │  ← Rust program compiled to RISC-V
+│  │               │  │
+│  │ ┌───────────┐ │  │
+│  │ │BPF        │ │  │  ← Your BPF interpreter (in Rust)
+│  │ │Interpreter│ │  │
+│  │ │           │ │  │
+│  │ │ Solana    │ │  │  ← Executes Solana BPF programs
+│  │ │ Programs  │ │  │
+│  │ └───────────┘ │  │
+│  └───────────────┘  │
+└─────────────────────┘
+
 ## Project Status: MAJOR MILESTONE ACHIEVED
 
 **Current Status**: This project has achieved a major milestone with a complete, working BPF execution framework. The codebase compiles successfully with zero errors and provides a fully functional foundation for Solana program execution within ZisK constraints.
