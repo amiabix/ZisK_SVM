@@ -12,9 +12,10 @@ use ziskos::{read_input, set_output};
 pub mod complete_bpf_interpreter;
 pub mod bpf_zisk_integration;
 pub mod bpf_test_utils;
-pub mod real_rbpf_integration;
-pub mod zisk_proof_integration;
-pub mod unified_execution_pipeline;
+// Note: RBPF modules temporarily disabled for ZisK RISC-V build
+// pub mod real_rbpf_integration;
+// pub mod zisk_proof_integration;
+// pub mod unified_execution_pipeline;
 
 // Re-export key types
 pub use complete_bpf_interpreter::{BpfExecutionContext, BpfInstruction, BpfRegisters, BpfMemory, RealBpfInterpreter, ExecutionResult};

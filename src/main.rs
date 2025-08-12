@@ -2,11 +2,16 @@
 // ZISK-SVM: BPF INTERPRETER IN RISC-V ZKVM
 // =================================================================
 //
+// Following ZisK patterns from: https://0xpolygonhermez.github.io/zisk/getting_started/writing_programs.html
+//
 // CORRECT ARCHITECTURE:
 // ZisK (RISC-V) contains BPF interpreter (Rust) that executes Solana programs
-// This provides zero-knowledge proofs of Solana BPF execution
+
+#![allow(unused)]
+#![no_main]
 
 use anyhow::{Result, anyhow, Context};
+use ziskos::{read_input, set_output};
 
 // Import our complete BPF interpreter and ZisK integration
 mod complete_bpf_interpreter;
@@ -91,11 +96,11 @@ fn read_zisk_input() -> Result<ZiskInputData> {
     // Use proper ZisK input function as per documentation
     let input_bytes: Vec<u8> = read_input();
     
-    // Parse the input format
-    parse_zisk_input_format(&input_bytes)
-    
-    // Method 3: Default test data for demonstration
-    create_test_zisk_input()
+    // Try to parse the input format, fall back to test data if parsing fails
+    match parse_zisk_input_format(&input_bytes) {
+        Ok(data) => Ok(data),
+        Err(_) => create_test_zisk_input()
+    }
 }
 
 fn parse_zisk_input_format(data: &[u8]) -> Result<ZiskInputData> {

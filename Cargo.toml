@@ -4,15 +4,16 @@ version = "0.1.0"
 edition = "2021"
 
 # ZisK guest program - compiled to RISC-V
-[lib]
-name = "solana_test"
-crate-type = ["cdylib"]
+# ZisK guest program - compiled to RISC-V
+# Note: ZisK expects a binary program, not a library
+# The main.rs will be the entry point for ZisK execution
 
-# Binary target for testing (only when not building for ZisK)
+# Binary target for ZisK (RISC-V) - this is the main target
 [[bin]]
 name = "solana_test"
-path = "src/main.rs"
-required-features = ["host-testing"]
+path = "src/memory_optimized_zisk_main.rs"
+
+# Note: The host-testing binary is handled by features
 
 # ZisK target configuration
 [target.riscv64ima-zisk-zkvm-elf]
@@ -35,8 +36,8 @@ sha2 = "0.10"
 hex = "0.4.3"
 bs58 = "0.5"
 
-# Solana RBPF integration
-rbpf = "0.3.0"
+# Solana RBPF integration (only for host builds, not for ZisK RISC-V)
+# rbpf = "0.3.0"
 
 # Remove Solana dependencies - not needed for ZisK guest program
 # The BPF interpretation happens in pure Rust code compiled to RISC-V
