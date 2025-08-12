@@ -1,13 +1,13 @@
 
 [package]
-name = "bpf-zisk-program"
+name = "bpf-zisk-interpreter"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 
 [[bin]]
-name = "bpf_program"
+name = "bpf_interpreter"
 path = "src/main.rs"
 
 [target.riscv64ima-zisk-zkvm-elf]

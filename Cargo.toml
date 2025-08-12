@@ -1,10 +1,10 @@
 [package]
-name = "bpf-riscv-transpiler"
+name = "bpf-zisk-interpreter"
 version = "0.1.0"
 edition = "2021"
-description = "BPF to RISC-V Transpiler for ZisK Integration"
+description = "BPF Interpreter for ZisK Integration - Direct BPF execution in ZisK zkVM"
 license = "MIT"
-repository = "https://github.com/your-username/bpf-riscv-transpiler"
+repository = "https://github.com/your-username/bpf-zisk-interpreter"
 
 [dependencies]
 thiserror = "1.0"
@@ -16,7 +16,7 @@ serde_json = "1.0"
 criterion = "0.5"
 
 [[bin]]
-name = "bpf-transpiler"
+name = "bpf-interpreter"
 path = "src/main.rs"
 
 [features]

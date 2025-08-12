@@ -97,164 +97,89 @@ pub struct BpfProgram {
     pub size: usize,
 }
 
-/// RISC-V instruction types
-#[derive(Debug, Clone, PartialEq)]
-pub enum RiscvInstruction {
-    // Arithmetic
-    Add { rd: u8, rs1: u8, rs2: u8 },
-    Addi { rd: u8, rs1: u8, immediate: i32 },
-    Sub { rd: u8, rs1: u8, rs2: u8 },
-    Mul { rd: u8, rs1: u8, rs2: u8 },
-    Div { rd: u8, rs1: u8, rs2: u8 },
-    Rem { rd: u8, rs1: u8, rs2: u8 },
-    
-    // Logical
-    And { rd: u8, rs1: u8, rs2: u8 },
-    Andi { rd: u8, rs1: u8, immediate: i32 },
-    Or { rd: u8, rs1: u8, rs2: u8 },
-    Ori { rd: u8, rs1: u8, immediate: i32 },
-    Xor { rd: u8, rs1: u8, rs2: u8 },
-    Xori { rd: u8, rs1: u8, immediate: i32 },
-    
-    // Shifts
-    Sll { rd: u8, rs1: u8, rs2: u8 },
-    Slli { rd: u8, rs1: u8, shamt: u8 },
-    Srl { rd: u8, rs1: u8, rs2: u8 },
-    Srli { rd: u8, rs1: u8, shamt: u8 },
-    Sra { rd: u8, rs1: u8, rs2: u8 },
-    Srai { rd: u8, rs1: u8, shamt: u8 },
-    
-    // Memory
-    Lw { rd: u8, rs1: u8, offset: i32 },
-    Sw { rs1: u8, rs2: u8, offset: i32 },
-    Ld { rd: u8, rs1: u8, offset: i32 },
-    Sd { rs1: u8, rs2: u8, offset: i32 },
-    Lb { rd: u8, rs1: u8, offset: i32 },
-    Lh { rd: u8, rs1: u8, offset: i32 },
-    Sb { rs1: u8, rs2: u8, offset: i32 },
-    Sh { rs1: u8, rs2: u8, offset: i32 },
-    
-    // Branches
-    Beq { rs1: u8, rs2: u8, offset: i32 },
-    Bne { rs1: u8, rs2: u8, offset: i32 },
-    Blt { rs1: u8, rs2: u8, offset: i32 },
-    Bge { rs1: u8, rs2: u8, offset: i32 },
-    Bltu { rs1: u8, rs2: u8, offset: i32 },
-    Bgeu { rs1: u8, rs2: u8, offset: i32 },
-    Bgt { rs1: u8, rs2: u8, offset: i32 },
-    Ble { rs1: u8, rs2: u8, offset: i32 },
-    
-    // Jumps
-    Jal { rd: u8, offset: i32 },
-    Jalr { rd: u8, rs1: u8, offset: i32 },
-    
-    // System
-    Ecall,
-    Ebreak,
-    
-    // Upper immediate
-    Lui { rd: u8, immediate: u32 },
-    
-    // Pseudo-instructions
-    Label { name: String },
-    Nop,
-}
-
-/// RISC-V program structure
+/// Result of BPF program execution
 #[derive(Debug, Clone)]
-pub struct RiscvProgram {
-    pub instructions: Vec<RiscvInstruction>,
-    pub labels: HashMap<String, usize>,
-    pub data_section: Vec<u8>,
-    pub text_section: Vec<u8>,
+pub struct ExecutionResult {
+    pub exit_code: u64,
+    pub registers: [u64; 11],
+    pub instructions_executed: usize,
+    pub execution_time: std::time::Duration,
 }
 
-/// Register mapping from BPF to RISC-V
+/// Register mapping for BPF to RISC-V conversion
 #[derive(Debug, Clone)]
 pub struct RegisterMapping {
-    pub bpf_to_riscv: HashMap<u8, u8>,
-    pub riscv_to_bpf: HashMap<u8, u8>,
-    pub next_riscv_reg: u8,
+    pub bpf_reg: u8,
+    pub riscv_reg: String,
+    pub is_allocated: bool,
 }
 
 impl RegisterMapping {
-    pub fn new() -> Self {
-        let mut bpf_to_riscv = HashMap::new();
-        let mut riscv_to_bpf = HashMap::new();
-        
-        // Map BPF registers 0-10 to RISC-V registers x10-x20
-        for i in 0..11 {
-            let riscv_reg = 10 + i;
-            bpf_to_riscv.insert(i, riscv_reg);
-            riscv_to_bpf.insert(riscv_reg, i);
-        }
-        
+    pub fn new(bpf_reg: u8) -> Self {
         Self {
-            bpf_to_riscv,
-            riscv_to_bpf,
-            next_riscv_reg: 21, // Start from x21 for temporary registers
+            bpf_reg,
+            riscv_reg: format!("r{}", bpf_reg),
+            is_allocated: false,
         }
-    }
-
-    /// Get RISC-V register for BPF register
-    pub fn get_riscv_reg(&self, bpf_reg: u8) -> Option<u8> {
-        self.bpf_to_riscv.get(&bpf_reg).copied()
-    }
-
-    /// Allocate a temporary register
-    pub fn allocate_temp_reg(&mut self) -> u8 {
-        let reg = self.next_riscv_reg;
-        self.next_riscv_reg += 1;
-        reg
-    }
-
-    /// Get register name for assembly generation
-    pub fn get_register_name(&self, reg: u8) -> Result<String, crate::error::TranspilerError> {
-        let name = match reg {
-            0 => "x0".to_string(),
-            1 => "ra".to_string(),
-            2 => "sp".to_string(),
-            3 => "gp".to_string(),
-            4 => "tp".to_string(),
-            5 => "t0".to_string(),
-            6 => "t1".to_string(),
-            7 => "t2".to_string(),
-            8 => "s0".to_string(),
-            9 => "s1".to_string(),
-            10 => "a0".to_string(),
-            11 => "a1".to_string(),
-            12 => "a2".to_string(),
-            13 => "a3".to_string(),
-            14 => "a4".to_string(),
-            15 => "a5".to_string(),
-            16 => "a6".to_string(),
-            17 => "a7".to_string(),
-            18 => "s2".to_string(),
-            19 => "s3".to_string(),
-            20 => "s4".to_string(),
-            21 => "s5".to_string(),
-            22 => "s6".to_string(),
-            23 => "s7".to_string(),
-            24 => "s8".to_string(),
-            25 => "s9".to_string(),
-            26 => "s10".to_string(),
-            27 => "s11".to_string(),
-            28 => "t3".to_string(),
-            29 => "t4".to_string(),
-            30 => "t5".to_string(),
-            31 => "t6".to_string(),
-            _ => return Err(crate::error::TranspilerError::RiscvGenerationError(
-                crate::error::RiscvGenerationError::RegisterAllocationError {
-                    message: format!("Invalid register index: {}", reg),
-                }
-            )),
-        };
-        Ok(name)
     }
 }
 
-impl Default for RegisterMapping {
+/// BPF program metadata
+#[derive(Debug, Clone)]
+pub struct BpfProgramMetadata {
+    pub name: String,
+    pub version: String,
+    pub author: String,
+    pub description: String,
+    pub entry_point: usize,
+    pub max_stack_size: usize,
+    pub max_memory_size: usize,
+}
+
+impl Default for BpfProgramMetadata {
     fn default() -> Self {
-        Self::new()
+        Self {
+            name: "Unknown".to_string(),
+            version: "1.0.0".to_string(),
+            author: "Unknown".to_string(),
+            description: "BPF program".to_string(),
+            entry_point: 0,
+            max_stack_size: 1024,
+            max_memory_size: 1024 * 1024,
+        }
+    }
+}
+
+/// BPF execution context
+#[derive(Debug, Clone)]
+pub struct BpfExecutionContext {
+    pub program: BpfProgram,
+    pub metadata: BpfProgramMetadata,
+    pub input_data: Vec<u8>,
+    pub output_data: Vec<u8>,
+    pub execution_trace: Vec<String>,
+}
+
+impl BpfExecutionContext {
+    pub fn new(program: BpfProgram) -> Self {
+        Self {
+            metadata: BpfProgramMetadata::default(),
+            input_data: Vec::new(),
+            output_data: Vec::new(),
+            execution_trace: Vec::new(),
+            program,
+        }
+    }
+    
+    pub fn add_trace(&mut self, message: String) {
+        self.execution_trace.push(message);
+    }
+    
+    pub fn set_input(&mut self, data: Vec<u8>) {
+        self.input_data = data;
+    }
+    
+    pub fn get_output(&self) -> &[u8] {
+        &self.output_data
     }
 }
