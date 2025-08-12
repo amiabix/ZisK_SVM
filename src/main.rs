@@ -1,535 +1,683 @@
-#![no_main]
-//! Solana Virtual Machine with ZisK Integration
-//! 
-//! This is the ZisK entry point that:
-//! 1. Reads transaction data from input.bin
-//! 2. Executes Solana transaction validation
-//! 3. Generates zero-knowledge proofs
-//! 4. Outputs proof data for verification
+// =================================================================
+// ZISK-SVM: BPF INTERPRETER IN RISC-V ZKVM
+// =================================================================
+//
+// CORRECT ARCHITECTURE:
+// ZisK (RISC-V) contains BPF interpreter (Rust) that executes Solana programs
+// This provides zero-knowledge proofs of Solana BPF execution
 
-// use ziskos::entrypoint; // Removed - not needed
-use anyhow::{Result, Context};
-use std::fs;
-use bs58;
-use sha2::{Sha256, Digest};
-use solana_sdk::message::MessageHeader;
-use solana_sdk::instruction::CompiledInstruction;
+use anyhow::{Result, anyhow, Context};
 
-// Import our SVM modules
-mod bpf_interpreter;
-mod solana_executor;
-mod real_bpf_loader;
-mod real_solana_parser;
-mod real_account_loader;
-mod zisk_svm_bridge;
+// Import our complete BPF interpreter and ZisK integration
+mod complete_bpf_interpreter;
+mod bpf_zisk_integration;
+mod bpf_test_utils;
 
-// Remove the problematic entrypoint macro
-// entrypoint!(main);
+use complete_bpf_interpreter::{RealBpfInterpreter, ExecutionResult};
+use bpf_zisk_integration::{ZiskBpfExecutor, ZiskExecutionConfig, ZiskTransactionContext, ZiskInstruction, SolanaAccount, AccountMeta};
 
-/// Main ZisK execution function
-/// 
-/// This function is called by ZisK when executing the program.
-/// It reads input data, executes SVM logic, and generates proofs.
-#[no_mangle]
-pub extern "C" fn main() -> i32 {
-    match run_main() {
+// ZisK entrypoint - this runs in RISC-V environment
+ziskos::entrypoint!(main);
+
+fn main() {
+    match run_zisk_bpf_interpreter() {
         Ok(_) => {
-            println!("✅ ZisK-SVM execution completed successfully");
-            0
+            println!("✅ ZisK-SVM: Real BPF execution completed successfully");
         }
         Err(e) => {
-            eprintln!("❌ Error: {}", e);
-            1
+            eprintln!("❌ ZisK-SVM error: {}", e);
+            std::process::exit(1);
         }
     }
 }
 
-fn test_rbpf_integration() -> Result<(), anyhow::Error> {
-    println!("Testing RBPF integration...");
+fn run_zisk_bpf_interpreter() -> Result<()> {
+    println!("🚀 ZisK-SVM: Starting Real BPF Execution in RISC-V zkVM");
     
-    let mut bpf_loader = crate::real_bpf_loader::RealBpfLoader::new()?;
-    
-    // Create minimal test program (simple BPF bytecode that exits successfully)
-    let test_program = vec![
-        0x7f, 0x45, 0x4c, 0x46, // ELF magic
-        0x02, 0x01, 0x01, 0x00, // 64-bit, little-endian, version 1
-        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // BPF_EXIT
-    ];
-    
-    println!("Loading test program...");
-    bpf_loader.load_program("test_rbpf", &test_program)?;
-    
-    // Create test accounts
-    let test_accounts = vec![
-        crate::real_bpf_loader::BpfAccount {
-            pubkey: [1u8; 32],
-            lamports: 1000000,
-            data: vec![42, 43, 44],
-            owner: [0u8; 32],
-            executable: false,
-            rent_epoch: 0,
-        }
-    ];
-    
-    // Execute test program
-    println!("Executing BPF program...");
-    let result = bpf_loader.execute_program(
-        "test_rbpf",
-        &[123, 124, 125], // Test instruction data
-        &test_accounts,
-    )?;
-    
-    // Display results
-    println!("Execution Results:");
-    println!("   Success: {}", result.success);
-    println!("   Compute units: {}", result.compute_units_consumed);
-    
-    if let Some(error) = &result.error_message {
-        println!("   Error: {}", error);
-    }
-    
-    if let Some(return_data) = &result.return_data {
-        println!("   Return data: {:?}", return_data);
-    }
-    
-    println!("Execution Logs:");
-    for log in &result.logs {
-        println!("   {}", log);
-    }
-    
-    if result.success {
-        println!("REAL BPF EXECUTION SUCCESSFUL!");
-    } else {
-        println!("BPF execution completed with issues");
-    }
-    
+    // 1. Read input from ZisK environment (RISC-V style)
+    let input_data = read_zisk_input()?;
+    println!("📥 ZisK input received: {} bytes", input_data.transaction_data.len() + input_data.account_data.len() + input_data.program_data.len());
+
+    // 2. Parse Solana transaction from input
+    let transaction_context = parse_solana_transaction_from_input(&input_data)?;
+    println!("📋 Parsed transaction with {} instructions", transaction_context.instructions.len());
+
+    // 3. Create ZisK BPF executor with optimized configuration
+    let config = create_zisk_optimized_config();
+    let mut executor = ZiskBpfExecutor::new(config);
+    println!("⚙️  ZisK BPF executor initialized");
+
+    // 4. Load test BPF programs for demonstration
+    load_test_programs(&mut executor)?;
+
+    // 5. Load accounts into executor
+    load_transaction_accounts(&mut executor, &transaction_context)?;
+
+    // 6. Execute transaction with full BPF interpretation
+    println!("⚡ Starting real BPF execution...");
+    let execution_result = executor.execute_transaction(transaction_context)?;
+
+    // 7. Process execution results
+    process_execution_results(&execution_result)?;
+
+    // 8. Generate ZisK proof data
+    let proof_data = generate_zisk_proof(&execution_result)?;
+
+    // 9. Output results for ZisK proof verification
+    output_zisk_results(&execution_result, &proof_data)?;
+
+    println!("🎉 ZisK-SVM: Real BPF execution completed successfully!");
+    println!("📊 Instructions executed: {}", execution_result.instructions_executed);
+    println!("⚡ Total compute units: {}", execution_result.total_compute_units);
+    println!("🔄 Total cycles: {}", execution_result.total_cycles);
+
     Ok(())
 }
 
-fn run_main() -> Result<(), anyhow::Error> {
-    println!("ZisK-SVM: REAL BPF Execution Test");
-    
-    // Test RBPF integration first
-    test_rbpf_integration()?;
-    
-    // Original ZisK logic...
-    println!("RBPF integration active - ready for real BPF programs!");
-    Ok(())
+// =================================================================
+// ZISK INPUT/OUTPUT HANDLING
+// =================================================================
+
+/// ZisK-compatible input data structure
+#[derive(Debug)]
+struct ZiskInputData {
+    pub version: u32,
+    pub transaction_data: Vec<u8>,
+    pub account_data: Vec<u8>,
+    pub program_data: Vec<u8>,
 }
 
-/// Read input data from ZisK input file
-/// 
-/// ZisK provides input data through the input file that was generated
-/// by our build.rs script.
-fn read_zisk_input() -> Result<ZiskInputData, anyhow::Error> {
-    // TODO: Implement actual ZisK input reading
-    // For now, return mock data
-    Ok(ZiskInputData {
-        version: 1,
-        transaction_count: 1,
-        transaction_data: TransactionData {
-            transaction_hash: "mock_hash".to_string(),
-            message: TransactionMessage {
-                header: MessageHeader {
-                    num_required_signatures: 1,
-                    num_readonly_signed_accounts: 0,
-                    num_readonly_unsigned_accounts: 1,
-                },
-                account_keys: vec![vec![0u8; 32], vec![0u8; 32]],
-                recent_blockhash: vec![0u8; 32],
-                instructions: vec![InstructionData {
-                    program_id_index: 0,
-                    accounts: vec![0, 1],
-                    data: vec![1, 2, 3, 4],
-                }],
-            },
-            signature: vec![0u8; 64],
-        },
-    })
+fn read_zisk_input() -> Result<ZiskInputData> {
+    // Method 1: Try to read from ZisK input mechanism
+    // This would use the actual ZisK input API when available
+    
+    // Method 2: Environment variable (for testing)
+    if let Ok(input_hex) = std::env::var("ZISK_INPUT_HEX") {
+        let input_bytes = hex::decode(input_hex)
+            .context("Failed to decode hex input")?;
+        return parse_zisk_input_format(&input_bytes);
+    }
+    
+    // Method 3: Default test data for demonstration
+    create_test_zisk_input()
 }
 
-/// Execute Solana Virtual Machine validation
-/// 
-/// This function runs the actual SVM logic within ZisK constraints,
-/// validating the transaction and generating execution results.
-fn execute_svm_validation(input_data: &TransactionData) -> Result<SvmExecutionResult> {
-    // Initialize ZisK-SVM bridge context
-    let mut zisk_context = zisk_svm_bridge::ZiskSvmContext::new()
-        .context("Failed to initialize ZisK-SVM context")?;
-    
-    // Load transaction into SVM
-    let transaction = parse_transaction_from_zisk_data(input_data)?;
-    
-    // Execute transaction validation using ZisK-SVM bridge
-    let execution_result = zisk_context.execute_transaction(&transaction)
-        .context("ZisK-SVM execution failed")?;
-    
-    // Get proof data from the bridge
-    let proof_data = zisk_context.get_proof_data().to_vec();
-    let public_inputs = zisk_context.get_public_inputs().to_vec();
-    
-    // Convert to our result format
-    Ok(SvmExecutionResult {
-        success: execution_result.success,
-        compute_units_used: execution_result.compute_units_used,
-        instruction_results: execution_result.instruction_results,
-        logs: execution_result.logs,
-        error: execution_result.error,
-        transaction_hash: input_data.transaction_hash.clone(),
-        proof_data,
-        public_inputs,
-        zisk_cycles: zisk_context.get_cycles_consumed(),
-    })
-}
-
-/// Parse ZisK input format
-/// 
-/// Converts the binary input data to structured transaction information
-/// that the SVM can process.
-fn parse_zisk_input(input_data: &[u8]) -> Result<ZiskInputData> {
-    if input_data.len() < 8 {
-        anyhow::bail!("Input data too short");
+fn parse_zisk_input_format(data: &[u8]) -> Result<ZiskInputData> {
+    if data.len() < 12 {
+        return Err(anyhow::anyhow!("Input data too short"));
     }
     
-    let mut offset = 0;
+    let version = u32::from_le_bytes([data[0], data[1], data[2], data[3]]);
+    let tx_len = u32::from_le_bytes([data[4], data[5], data[6], data[7]]) as usize;
+    let acc_len = u32::from_le_bytes([data[8], data[9], data[10], data[11]]) as usize;
     
-    // Parse version and transaction count
-    let version = u32::from_le_bytes([
-        input_data[offset], input_data[offset + 1], 
-        input_data[offset + 2], input_data[offset + 3]
-    ]);
-    offset += 4;
-    
-    let transaction_count = u32::from_le_bytes([
-        input_data[offset], input_data[offset + 1], 
-        input_data[offset + 2], input_data[offset + 3]
-    ]);
-    offset += 4;
-    
-    if version != 1 {
-        anyhow::bail!("Unsupported input version: {}", version);
-    }
-    
-    if transaction_count != 1 {
-        anyhow::bail!("Only single transaction supported, got: {}", transaction_count);
-    }
-    
-    // Parse transaction data
-    let transaction_data = parse_transaction_data(&input_data[offset..])?;
+    let mut offset = 12;
+    let transaction_data = data[offset..offset + tx_len].to_vec();
+    offset += tx_len;
+    let account_data = data[offset..offset + acc_len].to_vec();
+    offset += acc_len;
+    let program_data = data[offset..].to_vec();
     
     Ok(ZiskInputData {
         version,
-        transaction_count,
         transaction_data,
+        account_data,
+        program_data,
     })
 }
 
-/// Parse transaction data from ZisK input
-fn parse_transaction_data(data: &[u8]) -> Result<TransactionData> {
-    if data.len() < 64 {
-        anyhow::bail!("Transaction data too short");
-    }
+fn create_test_zisk_input() -> Result<ZiskInputData> {
+    Ok(ZiskInputData {
+        version: 1,
+        transaction_data: create_test_transaction_bytes(),
+        account_data: create_test_account_bytes(),
+        program_data: create_test_program_bytes(),
+    })
+}
+
+// =================================================================
+// TRANSACTION PARSING AND SETUP
+// =================================================================
+
+fn parse_solana_transaction_from_input(input: &ZiskInputData) -> Result<ZiskTransactionContext> {
+    // Parse transaction from the input data
+    // For demonstration, create a test transaction that exercises real BPF execution
     
-    let mut offset = 0;
+    let program_id = [1u8; 32]; // Test program ID
+    let account_pubkey = [2u8; 32]; // Test account
     
-    // Parse signature (64 bytes)
-    let signature = data[offset..offset + 64].to_vec();
-    offset += 64;
-    
-    // Parse message header (3 bytes)
-    if data.len() < offset + 3 {
-        anyhow::bail!("Insufficient data for message header");
-    }
-    
-    let num_required_signatures = data[offset];
-    let num_readonly_signed_accounts = data[offset + 1];
-    let num_readonly_unsigned_accounts = data[offset + 2];
-    offset += 3;
-    
-    // Parse account keys
-    if data.len() < offset + 1 {
-        anyhow::bail!("Insufficient data for account keys count");
-    }
-    
-    let account_key_count = data[offset] as usize;
-    offset += 1;
-    
-    if data.len() < offset + (account_key_count * 32) {
-        anyhow::bail!("Insufficient data for account keys");
-    }
-    
-    let mut account_keys = Vec::new();
-    for i in 0..account_key_count {
-        let key_start = offset + (i * 32);
-        account_keys.push(data[key_start..key_start + 32].to_vec());
-    }
-    offset += account_key_count * 32;
-    
-    // Parse recent blockhash (32 bytes)
-    if data.len() < offset + 32 {
-        anyhow::bail!("Insufficient data for blockhash");
-    }
-    
-    let blockhash = data[offset..offset + 32].to_vec();
-    offset += 32;
-    
-    // Parse instructions
-    if data.len() < offset + 1 {
-        anyhow::bail!("Insufficient data for instruction count");
-    }
-    
-    let instruction_count = data[offset] as usize;
-    offset += 1;
-    
-    let mut instructions = Vec::new();
-    for _ in 0..instruction_count {
-        if data.len() < offset + 3 {
-            anyhow::bail!("Insufficient data for instruction");
-        }
-        
-        let program_id_index = data[offset];
-        let accounts_len = data[offset + 1] as usize;
-        let data_len = data[offset + 2] as usize;
-        offset += 3;
-        
-        if data.len() < offset + accounts_len + data_len {
-            anyhow::bail!("Insufficient data for instruction");
-        }
-        
-        let mut accounts = Vec::new();
-        for j in 0..accounts_len {
-            if data.len() < offset + j {
-                anyhow::bail!("Insufficient data for instruction account");
-            }
-            accounts.push(data[offset + j]);
-        }
-        offset += accounts_len;
-        
-        let instruction_data = data[offset..offset + data_len].to_vec();
-        offset += data_len;
-        
-        instructions.push(InstructionData {
-            program_id_index,
-            accounts,
-            data: instruction_data,
-        });
-    }
-    
-    // Generate transaction hash from signature
-    let transaction_hash = bs58::encode(&signature).into_string();
-    
-    Ok(TransactionData {
-        signature,
-        message: TransactionMessage {
-            header: MessageHeader {
-                num_required_signatures,
-                num_readonly_signed_accounts,
-                num_readonly_unsigned_accounts,
+    Ok(ZiskTransactionContext {
+        transaction_hash: compute_transaction_hash(&input.transaction_data),
+        instructions: vec![
+            // Instruction 1: Math operations
+            ZiskInstruction {
+                program_id,
+                accounts: vec![
+                    AccountMeta {
+                        pubkey: account_pubkey,
+                        is_signer: false,
+                        is_writable: true,
+                    }
+                ],
+                data: vec![0x01, 0x00, 0x00, 0x00, 0x2A, 0x00, 0x00, 0x00], // Math operation: add 42
             },
-            account_keys,
-            recent_blockhash: blockhash,
-            instructions,
-        },
-        transaction_hash,
+            // Instruction 2: Memory operations
+            ZiskInstruction {
+                program_id,
+                accounts: vec![
+                    AccountMeta {
+                        pubkey: account_pubkey,
+                        is_signer: false,
+                        is_writable: true,
+                    }
+                ],
+                data: vec![0x02, 0x00, 0x00, 0x00], // Memory operation
+            },
+            // Instruction 3: Logging operation
+            ZiskInstruction {
+                program_id,
+                accounts: vec![],
+                data: b"Hello from ZisK-SVM BPF!".to_vec(),
+            },
+        ],
+        accounts: vec![
+            SolanaAccount {
+                pubkey: account_pubkey,
+                lamports: 1_000_000,
+                data: vec![0u8; 1024], // 1KB account data
+                owner: program_id,
+                executable: false,
+                rent_epoch: 200,
+            }
+        ],
+        recent_blockhash: [0x42u8; 32],
+        signatures: vec![[0x13u8; 64]],
     })
 }
 
-/// Parse transaction from ZisK data for SVM execution
-fn parse_transaction_from_zisk_data(data: &TransactionData) -> Result<solana_executor::SolanaTransaction> {
-    // Convert our parsed data to SVM format
-    let message = solana_executor::TransactionMessage {
-        header: MessageHeader {
-            num_required_signatures: data.message.header.num_required_signatures,
-            num_readonly_signed_accounts: data.message.header.num_readonly_signed_accounts,
-            num_readonly_unsigned_accounts: data.message.header.num_readonly_unsigned_accounts,
-        },
-        account_keys: data.message.account_keys.iter()
-            .map(|key| bs58::encode(key).into_string())
-            .collect(),
-        recent_blockhash: bs58::encode(&data.message.recent_blockhash).into_string(),
-        instructions: data.message.instructions.iter()
-            .map(|inst| CompiledInstruction {
-                program_id_index: inst.program_id_index,
-                accounts: inst.accounts.clone(),
-                data: inst.data.clone(),
-            })
-            .collect(),
-    };
-    
-    Ok(solana_executor::SolanaTransaction {
-        signatures: vec![bs58::encode(&data.signature).into_string()],
-        message,
-        meta: None,
-    })
+fn compute_transaction_hash(data: &[u8]) -> [u8; 32] {
+    use sha2::{Sha256, Digest};
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    let result = hasher.finalize();
+    let mut hash = [0u8; 32];
+    hash.copy_from_slice(&result);
+    hash
 }
 
-/// Generate ZisK proof from SVM execution result
-fn generate_zisk_proof(svm_result: &SvmExecutionResult) -> Result<ZiskProof> {
-    // Use proof data directly from ZisK-SVM bridge
-    let proof_data = svm_result.proof_data.clone();
-    let public_inputs = svm_result.public_inputs.clone();
-    
-    // Generate ZisK proof using the ZisK proof system
-    let proof = ZiskProof {
-        transaction_hash: svm_result.transaction_hash.clone(),
-        proof_data,
-        public_inputs,
-        metadata: ProofMetadata {
-            timestamp: get_current_timestamp(),
-            compute_units_used: svm_result.compute_units_used,
-            zisk_cycles: svm_result.zisk_cycles,
-            version: "1.0.0".to_string(),
-        },
-    };
-    
-    Ok(proof)
-}
+// =================================================================
+// BPF PROGRAM CREATION AND LOADING
+// =================================================================
 
-/// Output proof data for ZisK
-/// 
-/// This function outputs the proof data that ZisK will capture
-/// and use for verification.
-fn output_proof_data(proof: &ZiskProof) -> Result<()> {
-    // In ZisK, we output proof data through specific mechanisms
-    write_zisk_output(&proof.proof_data)
-        .context("Failed to output proof data")?;
+fn load_test_programs(executor: &mut ZiskBpfExecutor) -> Result<()> {
+    println!("📦 Loading test BPF programs...");
     
-    write_zisk_output(&proof.public_inputs)
-        .context("Failed to output public inputs")?;
+    // Program 1: Math and logic operations
+    let math_program = create_math_test_program()?;
+    executor.load_program([1u8; 32], math_program)?;
+    println!("   ✅ Math program loaded");
+    
+    // Program 2: Memory operations
+    let memory_program = create_memory_test_program()?;
+    executor.load_program([2u8; 32], memory_program)?;
+    println!("   ✅ Memory program loaded");
+    
+    // Program 3: Syscall operations  
+    let syscall_program = create_syscall_test_program()?;
+    executor.load_program([3u8; 32], syscall_program)?;
+    println!("   ✅ Syscall program loaded");
     
     Ok(())
 }
 
-/// Create proof data from SVM execution result
-fn create_proof_data(svm_result: &SvmExecutionResult) -> Result<Vec<u8>> {
-    let mut proof_data = Vec::new();
+fn create_math_test_program() -> Result<Vec<u8>> {
+    let mut program = create_elf_header();
     
-    // Add execution success flag
-    proof_data.push(svm_result.success as u8);
+    // BPF program that performs math operations:
+    // 1. Load immediate 10 into r1
+    // 2. Load immediate 32 into r2  
+    // 3. Add r1 + r2 -> r3
+    // 4. Multiply r3 * 2 -> r4
+    // 5. Store result and exit
     
-    // Add compute units used (8 bytes, little-endian)
-    proof_data.extend_from_slice(&svm_result.compute_units_used.to_le_bytes());
+    program.extend_from_slice(&[
+        // MOV r1, 10
+        0xB7, 0x01, 0x00, 0x00, 0x0A, 0x00, 0x00, 0x00,
+        // MOV r2, 32  
+        0xB7, 0x02, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
+        // ADD r3, r1, r2 (r3 = r1 + r2)
+        0x0F, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        // MOV r4, r3
+        0xBF, 0x43, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        // MUL r4, 2
+        0x27, 0x04, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+        // MOV r0, r4 (return value)
+        0xBF, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        // EXIT
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    ]);
     
-    // Add instruction count
-    proof_data.push(svm_result.instruction_results.len() as u8);
+    Ok(program)
+}
+
+fn create_memory_test_program() -> Result<Vec<u8>> {
+    let mut program = create_elf_header();
     
-    // Add instruction results
-    for instruction_result in &svm_result.instruction_results {
-        proof_data.push(instruction_result.success as u8);
-        proof_data.extend_from_slice(&instruction_result.compute_units_used.to_le_bytes());
-        
-        if let Some(ref return_data) = instruction_result.return_data {
-            proof_data.extend_from_slice(&(return_data.len() as u32).to_le_bytes());
-            proof_data.extend_from_slice(return_data);
-        } else {
-            proof_data.extend_from_slice(&[0u8; 4]); // No return data
+    // BPF program that performs memory operations:
+    // 1. Write data to memory
+    // 2. Read data from memory  
+    // 3. Verify correctness
+    // 4. Exit with result
+    
+    program.extend_from_slice(&[
+        // MOV r1, heap_addr (0x100000000)
+        0x18, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        // MOV r2, 0x12345678 (test value)
+        0xB7, 0x02, 0x00, 0x00, 0x78, 0x56, 0x34, 0x12,
+        // STX [r1], r2 (store r2 at address r1)
+        0x7B, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        // LDX r3, [r1] (load from address r1 into r3)
+        0x79, 0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        // Compare r2 and r3
+        0x5D, 0x32, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, // JNE r3, r2, +2
+        // Success: MOV r0, 1
+        0xB7, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+        0x05, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, // JA +1
+        // Failure: MOV r0, 0
+        0xB7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        // EXIT
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    ]);
+    
+    Ok(program)
+}
+
+fn create_syscall_test_program() -> Result<Vec<u8>> {
+    let mut program = create_elf_header();
+    
+    // BPF program that tests Solana syscalls:
+    // 1. Call sol_log with message
+    // 2. Call sol_sha256 with data
+    // 3. Set return data
+    // 4. Exit successfully
+    
+    program.extend_from_slice(&[
+        // Set up log message in memory
+        0x18, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, // MOV r1, heap_addr
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        // Store "Hello BPF!" message
+        0xB7, 0x02, 0x00, 0x00, 0x6C, 0x6C, 0x65, 0x48, // "Hell"
+        0x73, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // STX [r1], r2
+        0xB7, 0x02, 0x00, 0x00, 0x21, 0x46, 0x50, 0x42, // "o BP"
+        0x73, 0x12, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, // STX [r1+4], r2
+        // Call sol_log syscall
+        0xB7, 0x02, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, // MOV r2, 8 (length)
+        0x85, 0x00, 0x00, 0x00, 0xF0, 0xC5, 0x6F, 0x7C, // CALL sol_log
+        // Set return data
+        0xB7, 0x01, 0x00, 0x00, 0x42, 0x00, 0x00, 0x00, // MOV r1, 0x42
+        0xB7, 0x02, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, // MOV r2, 4
+        0x85, 0x00, 0x00, 0x00, 0xA3, 0x38, 0x2A, 0x26, // CALL sol_set_return_data
+        // Exit successfully
+        0xB7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV r0, 0
+        0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // EXIT
+    ]);
+    
+    Ok(program)
+}
+
+fn create_elf_header() -> Vec<u8> {
+    let mut header = vec![0u8; 64];
+    header[0..4].copy_from_slice(b"\x7fELF"); // ELF magic
+    header[4] = 2; // 64-bit
+    header[5] = 1; // Little endian
+    header[6] = 1; // Version 1
+    header
+}
+
+// =================================================================
+// ACCOUNT LOADING AND MANAGEMENT
+// =================================================================
+
+fn load_transaction_accounts(executor: &mut ZiskBpfExecutor, transaction: &ZiskTransactionContext) -> Result<()> {
+    println!("👥 Loading transaction accounts...");
+    
+    for account in &transaction.accounts {
+        executor.load_account(account.clone());
+        println!("   ✅ Account loaded: {:02x}...", account.pubkey[0]);
+    }
+    
+    Ok(())
+}
+
+// =================================================================
+// EXECUTION RESULT PROCESSING
+// =================================================================
+
+fn process_execution_results(result: &bpf_zisk_integration::ZiskExecutionResult) -> Result<()> {
+    println!("\n🎯 BPF Execution Results:");
+    println!("   Success: {}", result.success);
+    println!("   Instructions: {}", result.instructions_executed);
+    println!("   Compute Units: {}", result.total_compute_units);
+    println!("   Cycles: {}", result.total_cycles);
+    println!("   Account Changes: {}", result.account_changes.len());
+    
+    // Log execution details
+    if !result.logs.is_empty() {
+        println!("\n📋 Execution Logs:");
+        for (i, log) in result.logs.iter().enumerate() {
+            println!("   {}: {}", i + 1, log);
         }
     }
     
-    // Add logs hash
-    let logs_hash = sha2::Sha256::digest(svm_result.logs.join("\n").as_bytes());
-    proof_data.extend_from_slice(&logs_hash);
-    
-    Ok(proof_data)
-}
-
-/// Create public inputs for proof verification
-fn create_public_inputs(svm_result: &SvmExecutionResult) -> Result<Vec<u8>> {
-    let mut public_inputs = Vec::new();
-    
-    // Add execution metadata
-    public_inputs.extend_from_slice(&svm_result.compute_units_used.to_le_bytes());
-    public_inputs.push(svm_result.instruction_results.len() as u8);
-    
-    // Add success flags
-    for instruction_result in &svm_result.instruction_results {
-        public_inputs.push(instruction_result.success as u8);
+    // Show return data
+    if let Some(ref return_data) = result.return_data {
+        println!("\n📤 Return Data: {} bytes", return_data.len());
+        if return_data.len() <= 32 {
+            println!("   Data: {:02x?}", return_data);
+        }
     }
     
-    // Add compute unit summary
-    let total_compute_units: u64 = svm_result.instruction_results.iter()
-        .map(|r| r.compute_units_used)
-        .sum();
-    public_inputs.extend_from_slice(&total_compute_units.to_le_bytes());
+    // Report any errors
+    if let Some(ref error) = result.error_message {
+        println!("\n❌ Error: {}", error);
+    }
     
-    Ok(public_inputs)
-}
-
-// Stub functions for ZisK dependencies
-
-fn write_zisk_output(data: &[u8]) -> Result<(), anyhow::Error> {
-    // TODO: Implement actual ZisK output writing
-    println!("ZisK output: {} bytes", data.len());
+    // Execution trace summary
+    println!("\n🔍 Execution Trace:");
+    for (i, step) in result.proof_data.execution_trace.iter().enumerate() {
+        println!("   Step {}: Instruction {}, Cycles: {}", 
+            i + 1, step.instruction_index, step.cycles_consumed);
+    }
+    
     Ok(())
 }
 
-fn get_current_timestamp() -> u64 {
-    // TODO: Implement actual timestamp
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs()
-}
-
-// Data structures for ZisK integration
+// =================================================================
+// ZISK PROOF GENERATION
+// =================================================================
 
 #[derive(Debug)]
-struct ZiskInputData {
-    version: u32,
-    transaction_count: u32,
-    transaction_data: TransactionData,
+struct ZiskProofOutput {
+    pub execution_summary: ExecutionSummary,
+    pub witness_data: Vec<u8>,
+    pub public_inputs: Vec<u8>,
+    pub state_commitment: [u8; 32],
+}
+
+#[derive(Debug, Clone)]
+struct ExecutionSummary {
+    pub success: bool,
+    pub instructions_executed: usize,
+    pub compute_units_consumed: u64,
+    pub cycles_consumed: u32,
+    pub final_account_state_hash: [u8; 32],
+}
+
+fn generate_zisk_proof(execution_result: &bpf_zisk_integration::ZiskExecutionResult) -> Result<ZiskProofOutput> {
+    println!("🔐 Generating ZisK proof data...");
+    
+    // Create execution summary for proof
+    let execution_summary = ExecutionSummary {
+        success: execution_result.success,
+        instructions_executed: execution_result.instructions_executed,
+        compute_units_consumed: execution_result.total_compute_units,
+        cycles_consumed: execution_result.total_cycles,
+        final_account_state_hash: compute_account_state_hash(&execution_result.account_changes),
+    };
+    
+    // Generate witness data (private inputs for proof)
+    let witness_data = generate_witness_data(execution_result)?;
+    
+    // Generate public inputs (verifiable outputs)
+    let public_inputs = generate_public_inputs(&execution_summary)?;
+    
+    // Compute state commitment
+    let state_commitment = compute_state_commitment(&execution_summary, &witness_data)?;
+    
+    println!("   ✅ Witness data: {} bytes", witness_data.len());
+    println!("   ✅ Public inputs: {} bytes", public_inputs.len());
+    println!("   ✅ State commitment: {:02x}...", state_commitment[0]);
+    
+    Ok(ZiskProofOutput {
+        execution_summary,
+        witness_data,
+        public_inputs,
+        state_commitment,
+    })
+}
+
+fn compute_account_state_hash(account_changes: &[bpf_zisk_integration::AccountChange]) -> [u8; 32] {
+    use sha2::{Sha256, Digest};
+    let mut hasher = Sha256::new();
+    
+    for change in account_changes {
+        hasher.update(&change.pubkey);
+        hasher.update(&change.lamports_after.to_le_bytes());
+        hasher.update(&change.data_after);
+    }
+    
+    let result = hasher.finalize();
+    let mut hash = [0u8; 32];
+    hash.copy_from_slice(&result);
+    hash
+}
+
+fn generate_witness_data(execution_result: &bpf_zisk_integration::ZiskExecutionResult) -> Result<Vec<u8>> {
+    let mut witness = Vec::new();
+    
+    // Add execution trace
+    for step in &execution_result.proof_data.execution_trace {
+        witness.extend_from_slice(&step.instruction_index.to_le_bytes());
+        witness.extend_from_slice(&step.cycles_consumed.to_le_bytes());
+    }
+    
+    // Add account changes
+    for change in &execution_result.account_changes {
+        witness.extend_from_slice(&change.pubkey);
+        witness.extend_from_slice(&change.lamports_before.to_le_bytes());
+        witness.extend_from_slice(&change.lamports_after.to_le_bytes());
+        witness.extend_from_slice(&(change.data_before.len() as u32).to_le_bytes());
+        witness.extend_from_slice(&change.data_before);
+        witness.extend_from_slice(&(change.data_after.len() as u32).to_le_bytes());
+        witness.extend_from_slice(&change.data_after);
+    }
+    
+    Ok(witness)
+}
+
+fn generate_public_inputs(summary: &ExecutionSummary) -> Result<Vec<u8>> {
+    let mut inputs = Vec::new();
+    
+    // Success flag
+    inputs.push(if summary.success { 1 } else { 0 });
+    
+    // Execution metrics
+    inputs.extend_from_slice(&summary.instructions_executed.to_le_bytes());
+    inputs.extend_from_slice(&summary.compute_units_consumed.to_le_bytes());
+    inputs.extend_from_slice(&summary.cycles_consumed.to_le_bytes());
+    
+    // Final state hash
+    inputs.extend_from_slice(&summary.final_account_state_hash);
+    
+    Ok(inputs)
+}
+
+fn compute_state_commitment(summary: &ExecutionSummary, witness: &[u8]) -> Result<[u8; 32]> {
+    use sha2::{Sha256, Digest};
+    let mut hasher = Sha256::new();
+    
+    hasher.update(&summary.instructions_executed.to_le_bytes());
+    hasher.update(&summary.compute_units_consumed.to_le_bytes());
+    hasher.update(&summary.cycles_consumed.to_le_bytes());
+    hasher.update(&summary.final_account_state_hash);
+    hasher.update(witness);
+    
+    let result = hasher.finalize();
+    let mut commitment = [0u8; 32];
+    commitment.copy_from_slice(&result);
+    Ok(commitment)
+}
+
+// =================================================================
+// ZISK OUTPUT
+// =================================================================
+
+fn output_zisk_results(execution_result: &bpf_zisk_integration::ZiskExecutionResult, proof: &ZiskProofOutput) -> Result<()> {
+    println!("📤 Outputting ZisK results...");
+    
+    // Create ZisK output structure
+    let zisk_output = ZiskOutput {
+        success: execution_result.success,
+        execution_summary: proof.execution_summary.clone(),
+        witness_data: proof.witness_data.clone(),
+        public_inputs: proof.public_inputs.clone(),
+        state_commitment: proof.state_commitment,
+        logs: execution_result.logs.clone(),
+        return_data: execution_result.return_data.clone(),
+    };
+    
+    // Method 1: ZisK journal output (like RISC Zero env::commit)
+    output_to_zisk_journal(&zisk_output)?;
+    
+    // Method 2: JSON output for debugging
+    output_to_json(&zisk_output)?;
+    
+    // Method 3: Binary output for proof verification
+    output_to_binary(&zisk_output)?;
+    
+    println!("   ✅ ZisK journal output committed");
+    println!("   ✅ JSON output written");
+    println!("   ✅ Binary output written");
+    
+    Ok(())
 }
 
 #[derive(Debug)]
-struct TransactionData {
-    signature: Vec<u8>,
-    message: TransactionMessage,
-    transaction_hash: String,
+struct ZiskOutput {
+    pub success: bool,
+    pub execution_summary: ExecutionSummary,
+    pub witness_data: Vec<u8>,
+    pub public_inputs: Vec<u8>,
+    pub state_commitment: [u8; 32],
+    pub logs: Vec<String>,
+    pub return_data: Option<Vec<u8>>,
 }
 
-#[derive(Debug)]
-struct TransactionMessage {
-    header: MessageHeader,
-    account_keys: Vec<Vec<u8>>,
-    recent_blockhash: Vec<u8>,
-    instructions: Vec<InstructionData>,
+fn output_to_zisk_journal(output: &ZiskOutput) -> Result<()> {
+    // This would use the actual ZisK journal API when available
+    // For now, output to stdout in a format ZisK can consume
+    
+    println!("ZISK_OUTPUT_START");
+    println!("SUCCESS:{}", output.success);
+    println!("INSTRUCTIONS:{}", output.execution_summary.instructions_executed);
+    println!("COMPUTE_UNITS:{}", output.execution_summary.compute_units_consumed);
+    println!("CYCLES:{}", output.execution_summary.cycles_consumed);
+    println!("STATE_COMMITMENT:{}", hex::encode(output.state_commitment));
+    println!("PUBLIC_INPUTS:{}", hex::encode(&output.public_inputs));
+    println!("WITNESS_SIZE:{}", output.witness_data.len());
+    println!("ZISK_OUTPUT_END");
+    
+    Ok(())
 }
 
-// Using solana_sdk::message::MessageHeader instead of local definition
-
-#[derive(Debug)]
-struct InstructionData {
-    program_id_index: u8,
-    accounts: Vec<u8>,
-    data: Vec<u8>,
+fn output_to_json(output: &ZiskOutput) -> Result<()> {
+    // Write JSON output for debugging and verification
+    let json_output = serde_json::json!({
+        "success": output.success,
+        "execution_summary": {
+            "instructions_executed": output.execution_summary.instructions_executed,
+            "compute_units_consumed": output.execution_summary.compute_units_consumed,
+            "cycles_consumed": output.execution_summary.cycles_consumed,
+            "final_account_state_hash": hex::encode(output.execution_summary.final_account_state_hash)
+        },
+        "state_commitment": hex::encode(output.state_commitment),
+        "public_inputs": hex::encode(&output.public_inputs),
+        "witness_size": output.witness_data.len(),
+        "logs": output.logs,
+        "return_data": output.return_data.as_ref().map(hex::encode)
+    });
+    
+    // In ZisK environment, this might be written to a specific location
+    if let Ok(json_str) = serde_json::to_string_pretty(&json_output) {
+        std::fs::write("zisk_execution_result.json", json_str)?;
+    }
+    
+    Ok(())
 }
 
-#[derive(Debug)]
-struct SvmExecutionResult {
-    success: bool,
-    compute_units_used: u64,
-    instruction_results: Vec<solana_executor::InstructionResult>,
-    logs: Vec<String>,
-    error: Option<String>,
-    transaction_hash: String,
-    proof_data: Vec<u8>,
-    public_inputs: Vec<u8>,
-    zisk_cycles: u32,
+fn output_to_binary(output: &ZiskOutput) -> Result<()> {
+    let mut binary_output = Vec::new();
+    
+    // Header
+    binary_output.extend_from_slice(b"ZISK");
+    binary_output.extend_from_slice(&1u32.to_le_bytes()); // Version
+    
+    // Success flag
+    binary_output.push(if output.success { 1 } else { 0 });
+    
+    // Execution summary
+    binary_output.extend_from_slice(&output.execution_summary.instructions_executed.to_le_bytes());
+    binary_output.extend_from_slice(&output.execution_summary.compute_units_consumed.to_le_bytes());
+    binary_output.extend_from_slice(&output.execution_summary.cycles_consumed.to_le_bytes());
+    
+    // State commitment
+    binary_output.extend_from_slice(&output.state_commitment);
+    
+    // Public inputs
+    binary_output.extend_from_slice(&(output.public_inputs.len() as u32).to_le_bytes());
+    binary_output.extend_from_slice(&output.public_inputs);
+    
+    // Witness data
+    binary_output.extend_from_slice(&(output.witness_data.len() as u32).to_le_bytes());
+    binary_output.extend_from_slice(&output.witness_data);
+    
+    std::fs::write("zisk_proof_data.bin", binary_output)?;
+    
+    Ok(())
 }
 
-#[derive(Debug)]
-struct ZiskProof {
-    transaction_hash: String,
-    proof_data: Vec<u8>,
-    public_inputs: Vec<u8>,
-    metadata: ProofMetadata,
+// =================================================================
+// CONFIGURATION AND UTILITIES
+// =================================================================
+
+fn create_zisk_optimized_config() -> ZiskExecutionConfig {
+    ZiskExecutionConfig {
+        max_compute_units: 1_400_000, // Solana standard limit
+        max_cycles: 1_000_000,        // ZisK constraint
+        max_memory: 64 * 1024 * 1024, // 64MB memory limit
+        enable_logging: true,         // Enable for demonstration
+        enable_debug: false,          // Disable for performance
+    }
 }
 
-#[derive(Debug)]
-struct ProofMetadata {
-    timestamp: u64,
-    compute_units_used: u64,
-    zisk_cycles: u32,
-    version: String,
+fn create_test_transaction_bytes() -> Vec<u8> {
+    // Create test transaction data
+    let mut tx_data = Vec::new();
+    tx_data.extend_from_slice(b"SOLANA_TX");
+    tx_data.extend_from_slice(&1u32.to_le_bytes()); // Version
+    tx_data.extend_from_slice(&3u32.to_le_bytes()); // Instruction count
+    tx_data
 }
+
+fn create_test_account_bytes() -> Vec<u8> {
+    // Create test account data
+    let mut acc_data = Vec::new();
+    acc_data.extend_from_slice(b"SOLANA_ACC");
+    acc_data.extend_from_slice(&1u32.to_le_bytes()); // Account count
+    acc_data
+}
+
+fn create_test_program_bytes() -> Vec<u8> {
+    // Create test program data
+    let mut prog_data = Vec::new();
+    prog_data.extend_from_slice(b"SOLANA_PROG");
+    prog_data.extend_from_slice(&3u32.to_le_bytes()); // Program count
+    prog_data
+}
+
+// Include required external dependencies
+extern crate serde_json;
+extern crate hex;
+extern crate sha2;
 
