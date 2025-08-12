@@ -1,0 +1,17 @@
+
+[package]
+name = "bpf-zisk-program"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[[bin]]
+name = "bpf_program"
+path = "src/main.rs"
+
+[target.riscv64ima-zisk-zkvm-elf]
+rustflags = [
+    "-C", "target-feature=+m,+a,+c",
+    "-C", "link-arg=--strip-all",
+]

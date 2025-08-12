@@ -24,6 +24,13 @@ default = []
 test-utils = []
 benchmarks = []
 
+# ZisK RISC-V target configuration
+[target.riscv64ima-zisk-zkvm-elf]
+rustflags = [
+    "-C", "target-feature=+m,+a,+c",
+    "-C", "link-arg=--strip-all",
+]
+
 [profile.release]
 opt-level = 3
 lto = true

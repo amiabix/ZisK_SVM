@@ -56,12 +56,36 @@ impl BpfTranspiler {
     
     /// Execute BPF program directly in ZisK
     pub fn execute_in_zisk(&mut self, bpf_bytecode: &[u8]) -> Result<ExecutionResult, TranspilerError> {
-        // Transpile to RISC-V
-        let riscv_code = self.transpile(bpf_bytecode)?;
-        
+        // Transpile to RISC-V assembly
+        let riscv_assembly = self.transpile_to_assembly(bpf_bytecode)?;
+
         // Execute in ZisK
-        let zisk = ZiskIntegration::new();
-        zisk.execute(riscv_code)
+        let mut zisk = ZiskIntegration::new();
+        zisk.initialize()?;
+        zisk.execute(&riscv_assembly)
+    }
+
+    /// Transpile BPF to RISC-V assembly (text format)
+    pub fn transpile_to_assembly(&mut self, bpf_bytecode: &[u8]) -> Result<String, TranspilerError> {
+        // Parse BPF bytecode
+        let bpf_program = self.parser.parse(bpf_bytecode)?;
+
+        // Generate RISC-V program structure
+        let riscv_program = self.generator.generate_program(&bpf_program)?;
+
+        // Convert to assembly text format
+        self.generator.program_to_assembly(&riscv_program)
+    }
+
+    /// Execute BPF program and generate proof in ZisK
+    pub fn execute_with_proof(&mut self, bpf_bytecode: &[u8]) -> Result<(ExecutionResult, Vec<u8>), TranspilerError> {
+        // Transpile to RISC-V assembly
+        let riscv_assembly = self.transpile_to_assembly(bpf_bytecode)?;
+
+        // Execute and generate proof in ZisK
+        let mut zisk = ZiskIntegration::new();
+        zisk.initialize()?;
+        zisk.execute_with_proof(&riscv_assembly)
     }
 }
 

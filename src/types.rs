@@ -195,15 +195,61 @@ impl RegisterMapping {
             next_riscv_reg: 21, // Start from x21 for temporary registers
         }
     }
-    
+
+    /// Get RISC-V register for BPF register
     pub fn get_riscv_reg(&self, bpf_reg: u8) -> Option<u8> {
         self.bpf_to_riscv.get(&bpf_reg).copied()
     }
-    
+
+    /// Allocate a temporary register
     pub fn allocate_temp_reg(&mut self) -> u8 {
         let reg = self.next_riscv_reg;
         self.next_riscv_reg += 1;
         reg
+    }
+
+    /// Get register name for assembly generation
+    pub fn get_register_name(&self, reg: u8) -> Result<String, crate::error::TranspilerError> {
+        let name = match reg {
+            0 => "x0".to_string(),
+            1 => "ra".to_string(),
+            2 => "sp".to_string(),
+            3 => "gp".to_string(),
+            4 => "tp".to_string(),
+            5 => "t0".to_string(),
+            6 => "t1".to_string(),
+            7 => "t2".to_string(),
+            8 => "s0".to_string(),
+            9 => "s1".to_string(),
+            10 => "a0".to_string(),
+            11 => "a1".to_string(),
+            12 => "a2".to_string(),
+            13 => "a3".to_string(),
+            14 => "a4".to_string(),
+            15 => "a5".to_string(),
+            16 => "a6".to_string(),
+            17 => "a7".to_string(),
+            18 => "s2".to_string(),
+            19 => "s3".to_string(),
+            20 => "s4".to_string(),
+            21 => "s5".to_string(),
+            22 => "s6".to_string(),
+            23 => "s7".to_string(),
+            24 => "s8".to_string(),
+            25 => "s9".to_string(),
+            26 => "s10".to_string(),
+            27 => "s11".to_string(),
+            28 => "t3".to_string(),
+            29 => "t4".to_string(),
+            30 => "t5".to_string(),
+            31 => "t6".to_string(),
+            _ => return Err(crate::error::TranspilerError::RiscvGenerationError(
+                crate::error::RiscvGenerationError::RegisterAllocationError {
+                    message: format!("Invalid register index: {}", reg),
+                }
+            )),
+        };
+        Ok(name)
     }
 }
 

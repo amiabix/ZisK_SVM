@@ -18,9 +18,9 @@ impl BpfParser {
     /// Parse BPF bytecode into structured instructions
     pub fn parse(&self, bytecode: &[u8]) -> Result<BpfProgram, TranspilerError> {
         if bytecode.len() > self.max_program_size {
-            return Err(TranspilerError::BpfParseError(BpfParseError::ProgramTooLarge {
-                size: bytecode.len(),
-                max: self.max_program_size,
+            return Err(TranspilerError::BpfParseError(BpfParseError::ProgramTooLarge { 
+                size: bytecode.len(), 
+                max_size: self.max_program_size 
             }));
         }
         
@@ -30,14 +30,14 @@ impl BpfParser {
         
         while offset < bytecode.len() {
             if offset + 8 > bytecode.len() {
-                return Err(TranspilerError::BpfParseError(BpfParseError::UnexpectedEnd { offset }));
+                return Err(TranspilerError::BpfParseError(BpfParseError::UnexpectedEndOfInput { offset }));
             }
             
             let instruction = self.parse_instruction(bytecode, offset)?;
-            instructions.push(instruction);
+            instructions.push(instruction.clone());
             
-            // Handle LD_IMM64 (special case - 16 bytes)
-            if let BpfOpcode::LdImm64 = instructions.last().unwrap().opcode {
+            // BPF instructions are 8 bytes, except LD_IMM64 which is 16 bytes
+            if instruction.opcode == BpfOpcode::LdImm64 {
                 offset += 16;
             } else {
                 offset += 8;
@@ -53,58 +53,62 @@ impl BpfParser {
     
     /// Parse a single BPF instruction
     fn parse_instruction(&self, bytecode: &[u8], offset: usize) -> Result<BpfInstruction, TranspilerError> {
-        if offset + 8 > bytecode.len() {
-            return Err(TranspilerError::BpfParseError(BpfParseError::UnexpectedEnd { offset }));
-        }
-        
         let opcode = bytecode[offset];
         let dst_reg = bytecode[offset + 1] & 0x0f; // Lower 4 bits
         let src_reg = (bytecode[offset + 1] >> 4) & 0x0f; // Upper 4 bits
-        let offset_val = i16::from_le_bytes([bytecode[offset + 2], bytecode[offset + 3]]);
-        let immediate = i64::from_le_bytes([
-            bytecode[offset + 4], bytecode[offset + 5], bytecode[offset + 6], bytecode[offset + 7],
-            0, 0, 0, 0,
-        ]);
-        
-        // Validate register indices
-        if dst_reg > 10 {
-            return Err(TranspilerError::BpfParseError(BpfParseError::InvalidRegister { register: dst_reg }));
-        }
-        if src_reg > 10 {
-            return Err(TranspilerError::BpfParseError(BpfParseError::InvalidRegister { register: src_reg }));
-        }
-        
-        // Parse opcode
-        let bpf_opcode = self.parse_opcode(opcode)?;
-        
-        // Handle LD_IMM64 special case
-        if bpf_opcode == BpfOpcode::LdImm64 {
+
+        // Handle LD_IMM64 instruction (16 bytes)
+        if opcode == 0x18 { // LD_IMM64
             if offset + 16 > bytecode.len() {
-                return Err(TranspilerError::BpfParseError(BpfParseError::UnexpectedEnd { offset }));
+                return Err(TranspilerError::BpfParseError(BpfParseError::UnexpectedEndOfInput { offset }));
             }
             
-            // LD_IMM64 has 64-bit immediate in the next 8 bytes
-            let full_immediate = i64::from_le_bytes([
-                bytecode[offset + 8], bytecode[offset + 9], bytecode[offset + 10], bytecode[offset + 11],
-                bytecode[offset + 12], bytecode[offset + 13], bytecode[offset + 14], bytecode[offset + 15],
+            let immediate_bytes = &bytecode[offset + 8..offset + 16];
+            let immediate = i64::from_le_bytes([
+                immediate_bytes[0], immediate_bytes[1], immediate_bytes[2], immediate_bytes[3],
+                immediate_bytes[4], immediate_bytes[5], immediate_bytes[6], immediate_bytes[7]
             ]);
-            
-            return Ok(BpfInstruction {
-                opcode: bpf_opcode,
+
+            Ok(BpfInstruction {
+                opcode: BpfOpcode::LdImm64,
+                dst_reg,
+                src_reg: 0,
+                immediate,
+                offset: 0,
+            })
+        } else {
+            // Regular 8-byte instruction
+            if offset + 8 > bytecode.len() {
+                return Err(TranspilerError::BpfParseError(BpfParseError::UnexpectedEndOfInput { offset }));
+            }
+
+            let offset_bytes = &bytecode[offset + 2..offset + 4];
+            let immediate_bytes = &bytecode[offset + 4..offset + 8];
+
+            // Validate register indices
+            if dst_reg > 10 {
+                return Err(TranspilerError::BpfParseError(BpfParseError::InvalidOpcode { opcode: dst_reg }));
+            }
+            if src_reg > 10 {
+                return Err(TranspilerError::BpfParseError(BpfParseError::InvalidOpcode { opcode: src_reg }));
+            }
+
+            let offset = i16::from_le_bytes([offset_bytes[0], offset_bytes[1]]);
+            let immediate = i64::from_le_bytes([
+                immediate_bytes[0], immediate_bytes[1], immediate_bytes[2], immediate_bytes[3],
+                0, 0, 0, 0
+            ]);
+
+            let opcode = self.parse_opcode(opcode)?;
+
+            Ok(BpfInstruction {
+                opcode,
                 dst_reg,
                 src_reg,
-                immediate: full_immediate,
-                offset: offset_val,
-            });
+                immediate,
+                offset,
+            })
         }
-        
-        Ok(BpfInstruction {
-            opcode: bpf_opcode,
-            dst_reg,
-            src_reg,
-            immediate,
-            offset: offset_val,
-        })
     }
     
     /// Parse BPF opcode
@@ -133,13 +137,15 @@ impl BpfParser {
             0xaf => Ok(BpfOpcode::Xor64Reg),
             0xb7 => Ok(BpfOpcode::Mov64Imm),
             0xbf => Ok(BpfOpcode::Mov64Reg),
-            
-            // Memory operations
             0x18 => Ok(BpfOpcode::LdImm64),
             0x30 => Ok(BpfOpcode::LdAbs8),
             0x28 => Ok(BpfOpcode::LdAbs16),
             0x20 => Ok(BpfOpcode::LdAbs32),
+            0x19 => Ok(BpfOpcode::LdAbs64),
             0x38 => Ok(BpfOpcode::LdInd8),
+            0x31 => Ok(BpfOpcode::LdInd16),
+            0x29 => Ok(BpfOpcode::LdInd32),
+            0x21 => Ok(BpfOpcode::LdInd64),
             0x71 => Ok(BpfOpcode::Ldx8),
             0x69 => Ok(BpfOpcode::Ldx16),
             0x61 => Ok(BpfOpcode::Ldx32),
@@ -152,8 +158,6 @@ impl BpfParser {
             0x6b => Ok(BpfOpcode::Stx16),
             0x63 => Ok(BpfOpcode::Stx32),
             0x7b => Ok(BpfOpcode::Stx64),
-            
-            // Branch operations
             0x05 => Ok(BpfOpcode::Ja),
             0x15 => Ok(BpfOpcode::JeqImm),
             0x1d => Ok(BpfOpcode::JeqReg),
@@ -179,8 +183,7 @@ impl BpfParser {
             0xdd => Ok(BpfOpcode::JsleReg),
             0x85 => Ok(BpfOpcode::Call),
             0x95 => Ok(BpfOpcode::Exit),
-            
-            _ => Err(TranspilerError::UnsupportedOpcode { opcode }),
+            _ => Err(TranspilerError::BpfParseError(BpfParseError::InvalidOpcode { opcode })),
         }
     }
     

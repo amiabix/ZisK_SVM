@@ -1812,6 +1812,165 @@ impl RiscvGenerator {
         self.label_counter += 1;
         label
     }
+
+    /// Convert RISC-V program to assembly text format
+    pub fn program_to_assembly(&self, riscv_program: &RiscvProgram) -> Result<String, TranspilerError> {
+        let mut assembly = String::new();
+        
+        // Add Rust function structure
+        assembly.push_str("    // BPF program transpiled to Rust for ZisK\n");
+        assembly.push_str("    let mut r0: i64 = 0;\n");
+        assembly.push_str("    let mut r1: i64 = 0;\n");
+        assembly.push_str("    let mut r2: i64 = 0;\n");
+        assembly.push_str("    let mut r3: i64 = 0;\n");
+        assembly.push_str("    let mut r4: i64 = 0;\n");
+        assembly.push_str("    let mut r5: i64 = 0;\n");
+        assembly.push_str("    let mut r6: i64 = 0;\n");
+        assembly.push_str("    let mut r7: i64 = 0;\n");
+        assembly.push_str("    let mut r8: i64 = 0;\n");
+        assembly.push_str("    let mut r9: i64 = 0;\n");
+        assembly.push_str("    let mut r10: i64 = 0;\n");
+        
+        // Convert instructions to Rust code
+        for (i, instruction) in riscv_program.instructions.iter().enumerate() {
+            assembly.push_str("    ");
+            assembly.push_str(&self.instruction_to_rust(instruction, i)?);
+            assembly.push_str("\n");
+        }
+        
+        Ok(assembly)
+    }
+
+    /// Convert RISC-V instruction to Rust code
+    fn instruction_to_rust(&self, instruction: &RiscvInstruction, _index: usize) -> Result<String, TranspilerError> {
+        match instruction {
+            RiscvInstruction::Add { rd, rs1, rs2 } => {
+                let rd_reg = self.get_bpf_register_name(*rd)?;
+                let rs1_reg = self.get_bpf_register_name(*rs1)?;
+                let rs2_reg = self.get_bpf_register_name(*rs2)?;
+                Ok(format!("{} = {} + {};", rd_reg, rs1_reg, rs2_reg))
+            },
+            RiscvInstruction::Addi { rd, rs1, immediate } => {
+                let rd_reg = self.get_bpf_register_name(*rd)?;
+                let rs1_reg = self.get_bpf_register_name(*rs1)?;
+                Ok(format!("{} = {} + {};", rd_reg, rs1_reg, immediate))
+            },
+            RiscvInstruction::Sub { rd, rs1, rs2 } => {
+                let rd_reg = self.get_bpf_register_name(*rd)?;
+                let rs1_reg = self.get_bpf_register_name(*rs1)?;
+                let rs2_reg = self.get_bpf_register_name(*rs2)?;
+                Ok(format!("{} = {} - {};", rd_reg, rs1_reg, rs2_reg))
+            },
+            RiscvInstruction::Mul { rd, rs1, rs2 } => {
+                let rd_reg = self.get_bpf_register_name(*rd)?;
+                let rs1_reg = self.get_bpf_register_name(*rs1)?;
+                let rs2_reg = self.get_bpf_register_name(*rs2)?;
+                Ok(format!("{} = {} * {};", rd_reg, rs1_reg, rs2_reg))
+            },
+            RiscvInstruction::Div { rd, rs1, rs2 } => {
+                let rd_reg = self.get_bpf_register_name(*rd)?;
+                let rs1_reg = self.get_bpf_register_name(*rs1)?;
+                let rs2_reg = self.get_bpf_register_name(*rs2)?;
+                Ok(format!("{} = {} / {};", rd_reg, rs1_reg, rs2_reg))
+            },
+            RiscvInstruction::Rem { rd, rs1, rs2 } => {
+                let rd_reg = self.get_bpf_register_name(*rd)?;
+                let rs1_reg = self.get_bpf_register_name(*rs1)?;
+                let rs2_reg = self.get_bpf_register_name(*rs2)?;
+                Ok(format!("{} = {} % {};", rd_reg, rs1_reg, rs2_reg))
+            },
+            RiscvInstruction::And { rd, rs1, rs2 } => {
+                let rd_reg = self.get_bpf_register_name(*rd)?;
+                let rs1_reg = self.get_bpf_register_name(*rs1)?;
+                let rs2_reg = self.get_bpf_register_name(*rs2)?;
+                Ok(format!("{} = {} & {};", rd_reg, rs1_reg, rs2_reg))
+            },
+            RiscvInstruction::Or { rd, rs1, rs2 } => {
+                let rd_reg = self.get_bpf_register_name(*rd)?;
+                let rs1_reg = self.get_bpf_register_name(*rs1)?;
+                let rs2_reg = self.get_bpf_register_name(*rs2)?;
+                Ok(format!("{} = {} | {};", rd_reg, rs1_reg, rs2_reg))
+            },
+            RiscvInstruction::Xor { rd, rs1, rs2 } => {
+                let rd_reg = self.get_bpf_register_name(*rd)?;
+                let rs1_reg = self.get_bpf_register_name(*rs1)?;
+                let rs2_reg = self.get_bpf_register_name(*rs2)?;
+                Ok(format!("{} = {} ^ {};", rd_reg, rs1_reg, rs2_reg))
+            },
+            RiscvInstruction::Sll { rd, rs1, rs2 } => {
+                let rd_reg = self.get_bpf_register_name(*rd)?;
+                let rs1_reg = self.get_bpf_register_name(*rs1)?;
+                let rs2_reg = self.get_bpf_register_name(*rs2)?;
+                Ok(format!("{} = {} << {};", rd_reg, rs1_reg, rs2_reg))
+            },
+            RiscvInstruction::Srl { rd, rs1, rs2 } => {
+                let rd_reg = self.get_bpf_register_name(*rd)?;
+                let rs1_reg = self.get_bpf_register_name(*rs1)?;
+                let rs2_reg = self.get_bpf_register_name(*rs2)?;
+                Ok(format!("{} = {} >> {};", rd_reg, rs1_reg, rs2_reg))
+            },
+            RiscvInstruction::Lui { rd, immediate } => {
+                let rd_reg = self.get_bpf_register_name(*rd)?;
+                Ok(format!("{} = {};", rd_reg, immediate))
+            },
+            RiscvInstruction::Nop => Ok("// NOP".to_string()),
+            RiscvInstruction::Jal { rd, offset } => {
+                let rd_reg = self.get_bpf_register_name(*rd)?;
+                Ok(format!("// JAL {} -> {}", rd_reg, offset))
+            },
+            RiscvInstruction::Jalr { rd, rs1, offset } => {
+                let rd_reg = self.get_bpf_register_name(*rd)?;
+                let rs1_reg = self.get_bpf_register_name(*rs1)?;
+                Ok(format!("// JALR {} = {} + {}", rd_reg, rs1_reg, offset))
+            },
+            RiscvInstruction::Ecall => Ok("// ECALL".to_string()),
+            RiscvInstruction::Ebreak => Ok("// EBREAK".to_string()),
+            _ => Err(TranspilerError::RiscvGenerationError(RiscvGenerationError::InstructionGenerationFailed {
+                instruction: format!("{:?}", instruction),
+            }))
+        }
+    }
+
+    /// Get BPF register name for Rust code generation
+    fn get_bpf_register_name(&self, reg: u8) -> Result<String, TranspilerError> {
+        let name = match reg {
+            0 => "r0".to_string(),
+            1 => "r1".to_string(),
+            2 => "r2".to_string(),
+            3 => "r3".to_string(),
+            4 => "r4".to_string(),
+            5 => "r5".to_string(),
+            6 => "r6".to_string(),
+            7 => "r7".to_string(),
+            8 => "r8".to_string(),
+            9 => "r9".to_string(),
+            10 => "r10".to_string(),
+            _ => return Err(TranspilerError::RiscvGenerationError(RiscvGenerationError::RegisterAllocationError {
+                message: format!("Invalid register index: {}", reg),
+            })),
+        };
+        Ok(name)
+    }
+
+    /// Generate RISC-V program structure from BPF program
+    pub fn generate_program(&mut self, bpf_program: &BpfProgram) -> Result<RiscvProgram, TranspilerError> {
+        let mut instructions = Vec::new();
+        let mut labels = HashMap::new();
+        let mut data_section = Vec::new();
+        let mut text_section = Vec::new();
+
+        for (index, bpf_inst) in bpf_program.instructions.iter().enumerate() {
+            let riscv_instructions = self.translate_bpf_instruction(bpf_inst, index)?;
+            instructions.extend(riscv_instructions);
+        }
+
+        Ok(RiscvProgram {
+            instructions,
+            labels,
+            data_section,
+            text_section,
+        })
+    }
 }
 
 impl Default for RiscvGenerator {

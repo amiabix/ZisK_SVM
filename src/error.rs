@@ -5,72 +5,78 @@ use thiserror::Error;
 pub enum TranspilerError {
     #[error("BPF parsing error: {0}")]
     BpfParseError(#[from] BpfParseError),
-    
+
     #[error("RISC-V generation error: {0}")]
     RiscvGenerationError(#[from] RiscvGenerationError),
-    
+
     #[error("ZisK execution error: {0}")]
     ZiskExecutionError(#[from] ZiskExecutionError),
-    
+
     #[error("Invalid BPF program: {message}")]
     InvalidBpfProgram { message: String },
-    
+
     #[error("Unsupported BPF opcode: {opcode:#x}")]
     UnsupportedOpcode { opcode: u8 },
-    
+
     #[error("Memory allocation failed: {message}")]
     MemoryError { message: String },
 }
 
-/// BPF parsing specific errors
+/// BPF parsing errors
 #[derive(Error, Debug)]
 pub enum BpfParseError {
-    #[error("Invalid instruction format at offset {offset}: {message}")]
+    #[error("Invalid instruction at offset {offset}: {message}")]
     InvalidInstruction { offset: usize, message: String },
-    
-    #[error("Unexpected end of program at offset {offset}")]
-    UnexpectedEnd { offset: usize },
-    
-    #[error("Invalid register index: {register} (must be 0-10)")]
-    InvalidRegister { register: u8 },
-    
-    #[error("Invalid immediate value: {value}")]
-    InvalidImmediate { value: i64 },
-    
-    #[error("Program too large: {size} bytes (max: {max})")]
-    ProgramTooLarge { size: usize, max: usize },
+
+    #[error("Program too large: {size} bytes (max {max_size})")]
+    ProgramTooLarge { size: usize, max_size: usize },
+
+    #[error("Invalid opcode: {opcode:#x}")]
+    InvalidOpcode { opcode: u8 },
+
+    #[error("Unexpected end of input at offset {offset}")]
+    UnexpectedEndOfInput { offset: usize },
 }
 
-/// RISC-V generation specific errors
+/// RISC-V generation errors
 #[derive(Error, Debug)]
 pub enum RiscvGenerationError {
-    #[error("Failed to generate RISC-V for instruction: {instruction:?}")]
-    InstructionGenerationFailed { instruction: String },
-    
-    #[error("Invalid RISC-V assembly: {message}")]
-    InvalidAssembly { message: String },
-    
-    #[error("Label generation failed: {message}")]
-    LabelError { message: String },
-    
-    #[error("Register allocation failed: {message}")]
+    #[error("Failed to allocate register: {message}")]
     RegisterAllocationError { message: String },
+
+    #[error("Failed to generate instruction: {instruction}")]
+    InstructionGenerationFailed { instruction: String },
+
+    #[error("Invalid immediate value: {value}")]
+    InvalidImmediate { value: i64 },
+
+    #[error("Invalid offset value: {value}")]
+    InvalidOffset { value: i16 },
+
+    #[error("Assembly failed: {message}")]
+    AssemblyFailed { message: String },
 }
 
-/// ZisK execution specific errors
+/// ZisK execution errors
 #[derive(Error, Debug)]
 pub enum ZiskExecutionError {
-    #[error("ZisK initialization failed: {message}")]
-    InitializationError { message: String },
-    
-    #[error("RISC-V compilation failed: {message}")]
-    CompilationError { message: String },
-    
-    #[error("Execution failed: {message}")]
+    #[error("Build error: {message}")]
+    BuildError { message: String },
+
+    #[error("Execution error: {message}")]
     ExecutionError { message: String },
-    
-    #[error("Proof generation failed: {message}")]
-    ProofError { message: String },
+
+    #[error("Proof generation error: {message}")]
+    ProofGenerationError { message: String },
+
+    #[error("Validation error: {message}")]
+    ValidationError { message: String },
+
+    #[error("Version error: {message}")]
+    VersionError { message: String },
+
+    #[error("File I/O error: {message}")]
+    FileError { message: String },
 }
 
 impl From<std::io::Error> for TranspilerError {
