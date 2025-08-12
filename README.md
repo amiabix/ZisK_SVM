@@ -1,128 +1,89 @@
-# BPF to RISC-V Transpiler for ZisK Integration
+# BPF to RISC-V Transpiler for ZisK
 
-A **true transpiler** that converts BPF (Berkeley Packet Filter) bytecode to RISC-V assembly, enabling **native execution** in ZisK zkVM with **cryptographic proof generation**.
+A transpiler that converts Berkeley Packet Filter (BPF) bytecode to RISC-V assembly for native execution in ZisK zkVM with cryptographic proof generation.
 
-## 🎯 **What This Actually Does**
+## Overview
 
-### **❌ NOT an Interpreter**
-- **NOT** running BPF in a custom interpreter
-- **NOT** simulating BPF execution
-- **NOT** performance overhead from interpretation
+This project transpiles BPF programs to RISC-V assembly, enabling native execution in ZisK rather than interpretation. This approach eliminates interpretation overhead and generates cryptographic proofs of the original BPF program execution.
 
-### **✅ IS a True Transpiler**
-- **Converts** BPF bytecode to RISC-V assembly
-- **Executes** RISC-V code natively in ZisK
-- **Generates** cryptographic proofs of execution
-- **Unlocks** true zkVM value
-
-## 🏗️ **Architecture**
-
+**Architecture:**
 ```
 BPF Bytecode → Parser → RISC-V Generator → ZisK Execution → Proof Generation
-     ↓              ↓           ↓              ↓              ↓
-  Raw Bytes   Structured   RISC-V ASM    Native Exec    ZK Proof
 ```
 
-### **1. BPF Parser (`src/bpf_parser.rs`)**
-- Parses raw BPF bytecode into structured instructions
-- Supports 50+ BPF opcodes (ALU, Memory, Branch, System)
-- Handles special cases like `LD_IMM64` (16-byte instructions)
-- Validates register indices and instruction formats
+## Key Features
 
-### **2. RISC-V Generator (`src/riscv_generator.rs`)**
-- Converts BPF instructions to RISC-V assembly
-- Maps BPF registers (0-10) to RISC-V registers (x10-x20)
-- Generates proper RISC-V instruction encoding
-- Handles large immediates and complex operations
+- **Native Execution**: Converts BPF bytecode to RISC-V assembly for direct execution
+- **Full BPF Support**: Handles 50+ BPF opcodes including ALU, memory, branch, and system operations
+- **ZisK Integration**: Native execution in ZisK zkVM with proof generation
+- **Performance**: Eliminates interpretation overhead compared to BPF interpreters
 
-### **3. ZisK Integration (`src/zisk_integration.rs`)**
-- Executes RISC-V code natively in ZisK environment
-- Generates cryptographic proofs of execution
-- Manages memory and register state
-- Provides execution results and timing
+## Performance Comparison
 
-## 🚀 **Usage**
+| Approach | Performance | Memory Usage | Proof Generation |
+|----------|-------------|--------------|------------------|
+| BPF Interpreter | Slow (interpretation overhead) | High (interpreter + program state) | Complex (interpreter state) |
+| **BPF Transpiler** | **Fast (native RISC-V)** | **Low (just RISC-V code)** | **Simple (execution trace)** |
 
-### **Transpile BPF to RISC-V**
+## Installation
+
+```bash
+git clone [repository-url]
+cd bpf-riscv-transpiler
+cargo build --release
+```
+
+**Prerequisites:**
+- Rust 1.70+
+- ZisK toolchain (for full execution)
+
+## Usage
+
+### Transpile BPF to RISC-V
 ```bash
 cargo run -- transpile input.bpf output.riscv
 ```
 
-### **Execute BPF in ZisK**
+### Execute BPF in ZisK
 ```bash
 cargo run -- execute input.bpf
 ```
 
-### **Run Tests**
-```bash
-cargo run -- test
-```
-
-### **Run Demo**
-```bash
-cargo run -- demo
-```
-
-## 📊 **Performance Benefits**
-
-| Approach | Performance | Memory | Proof Generation |
-|----------|-------------|---------|------------------|
-| **Old: BPF Interpreter** | ❌ Slow (interpretation overhead) | ❌ High (interpreter + program) | ❌ Complex (interpreter state) |
-| **New: BPF Transpiler** | ✅ Fast (native RISC-V execution) | ✅ Low (just RISC-V code) | ✅ Simple (execution trace) |
-
-### **Speed Improvement**
-- **Native execution** vs interpretation: **10-100x faster**
-- **Direct RISC-V** vs emulated BPF: **Eliminates overhead**
-- **Optimized code** vs generic interpreter: **Better performance**
-
-### **Memory Efficiency**
-- **No interpreter state**: Saves memory during execution
-- **Direct register mapping**: Efficient memory usage
-- **Optimized RISC-V**: Smaller code footprint
-
-## 🔧 **Technical Details**
-
-### **Supported BPF Opcodes**
-- **ALU**: `ADD64_IMM`, `ADD64_REG`, `MUL64_REG`, `DIV64_REG`, `MOV64_IMM`, etc.
-- **Memory**: `LD_IMM64`, `LDX64`, `ST64`, `STX64`, etc.
-- **Branch**: `JA`, `JEQ_IMM`, `JGT_REG`, `CALL`, `EXIT`, etc.
-- **System**: All standard BPF system calls
-
-### **RISC-V Target**
-- **Architecture**: `riscv64ima-zisk-zkvm-elf`
-- **Extensions**: Integer, Multiply, Atomic, Compressed
-- **Registers**: x0-x31 (x10-x20 mapped to BPF registers)
-- **Memory**: 4-byte aligned instructions
-
-### **ZisK Integration**
-- **Target**: RISC-V 64-bit with ZisK extensions
-- **Proof Generation**: Native ZisK proof system
-- **Memory Management**: ZisK memory model
-- **Execution**: Native RISC-V instruction execution
-
-## 🧪 **Testing**
-
-### **Unit Tests**
+### Run Tests
 ```bash
 cargo test
 ```
 
-### **Integration Tests**
+### Demo
 ```bash
-cargo test --features test-utils
+cargo run -- demo
 ```
 
-### **Benchmarks**
-```bash
-cargo bench --features benchmarks
-```
+## Technical Details
 
-## 📁 **Project Structure**
+### Supported BPF Opcodes
+- **ALU Operations**: `ADD64_IMM`, `ADD64_REG`, `MUL64_REG`, `DIV64_REG`, `MOV64_IMM`
+- **Memory Operations**: `LD_IMM64`, `LDX64`, `ST64`, `STX64`
+- **Branch Operations**: `JA`, `JEQ_IMM`, `JGT_REG`, `CALL`, `EXIT`
+- **System Calls**: Standard BPF system call interface
+
+### RISC-V Target
+- **Architecture**: `riscv64ima-zisk-zkvm-elf`
+- **Register Mapping**: BPF registers (R0-R10) → RISC-V registers (x10-x20)
+- **Memory**: 4-byte aligned instructions with ZisK memory model
+
+### Implementation Components
+
+1. **BPF Parser** (`src/bpf_parser.rs`): Parses raw BPF bytecode into structured instructions
+2. **RISC-V Generator** (`src/riscv_generator.rs`): Converts BPF instructions to RISC-V assembly
+3. **ZisK Integration** (`src/zisk_integration.rs`): Executes RISC-V code natively in ZisK environment
+
+## Project Structure
 
 ```
 src/
-├── lib.rs              # Main library and transpiler
-├── main.rs             # Binary entry point
+├── lib.rs              # Main library and transpiler logic
+├── main.rs             # Binary entry point and CLI
 ├── error.rs            # Error types and handling
 ├── types.rs            # Core data structures
 ├── bpf_parser.rs       # BPF bytecode parser
@@ -130,115 +91,43 @@ src/
 └── zisk_integration.rs # ZisK execution integration
 ```
 
-## 🎯 **Roadmap**
+## Example
 
-### **Phase 1: Core Transpiler** ✅
-- [x] BPF parser with full opcode support
-- [x] RISC-V generator with register mapping
-- [x] Basic ZisK integration
-- [x] Error handling and validation
-
-### **Phase 2: Advanced Features** 🚧
-- [ ] Branch optimization and jump resolution
-- [ ] Memory access optimization
-- [ ] Advanced RISC-V instruction selection
-- [ ] Performance profiling and metrics
-
-### **Phase 3: Production Ready** 📋
-- [ ] Full BPF compatibility testing
-- [ ] ZisK proof generation optimization
-- [ ] Benchmarking and performance tuning
-- [ ] Documentation and examples
-
-## 🔍 **How It Works**
-
-### **1. BPF Parsing**
 ```rust
-let bpf_program = parser.parse(bpf_bytecode)?;
-// Converts raw bytes to structured BPF instructions
+use bpf_riscv_transpiler::Transpiler;
+
+let transpiler = Transpiler::new();
+let bpf_bytecode = std::fs::read("program.bpf")?;
+let riscv_code = transpiler.transpile(&bpf_bytecode)?;
+let result = transpiler.execute_in_zisk(&riscv_code)?;
 ```
 
-### **2. RISC-V Generation**
-```rust
-let riscv_code = generator.generate(&bpf_program)?;
-// Converts BPF instructions to RISC-V assembly
-```
+## Development Status
 
-### **3. ZisK Execution**
-```rust
-let result = zisk.execute(riscv_code)?;
-// Executes RISC-V code natively in ZisK
-```
+- ✅ **Core Transpiler**: BPF parser, RISC-V generator, basic ZisK integration
+- 🚧 **Advanced Features**: Branch optimization, memory access optimization
+- 📋 **Production**: Full compatibility testing, performance tuning
 
-### **4. Proof Generation**
-```rust
-let proof = zisk.generate_proof(riscv_code)?;
-// Generates cryptographic proof of execution
-```
+## Testing
 
-## 💡 **Why This Approach?**
-
-### **Traditional Approach (Interpreter)**
-```
-BPF → Interpreter → Execution → Proof
-     ↓
-  Performance overhead
-  Memory overhead
-  Complex proof generation
-```
-
-### **Our Approach (Transpiler)**
-```
-BPF → RISC-V → Native Execution → Proof
-     ↓
-  No performance overhead
-  Minimal memory usage
-  Simple proof generation
-```
-
-## 🚀 **Getting Started**
-
-### **Prerequisites**
-- Rust 1.70+
-- Cargo
-- ZisK toolchain (for full execution)
-
-### **Installation**
 ```bash
-git clone <repository>
-cd bpf-riscv-transpiler
-cargo build
+# Unit tests
+cargo test
+
+# Integration tests
+cargo test --features test-utils
+
+# Benchmarks
+cargo bench --features benchmarks
 ```
 
-### **Quick Demo**
-```bash
-cargo run -- demo
-```
-
-## 📚 **Documentation**
-
-- **API Reference**: `cargo doc --open`
-- **Examples**: See `src/main.rs` for usage examples
-- **Architecture**: Detailed in `src/lib.rs`
-
-## 🤝 **Contributing**
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+3. Make your changes with tests
+4. Submit a pull request
 
-## 📄 **License**
+## License
 
 MIT License - see LICENSE file for details.
-
-## 🙏 **Acknowledgments**
-
-- **ZisK Team** for the excellent zkVM platform
-- **Solana Team** for BPF specification and implementation
-- **RISC-V Foundation** for the open instruction set architecture
-
----
-
-**This is a true BPF → RISC-V transpiler that unlocks the full potential of ZisK as a zkVM. No more interpretation overhead - just native execution with cryptographic proofs.**
