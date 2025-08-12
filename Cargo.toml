@@ -14,6 +14,13 @@ name = "solana_test"
 path = "src/main.rs"
 required-features = ["host-testing"]
 
+# ZisK target configuration
+[target.riscv64ima-zisk-zkvm-elf]
+rustflags = [
+    "-C", "target-feature=+m,+a,+c,+f,+d",
+    "-C", "link-arg=--no-relax",
+]
+
 [dependencies]
 # ZisK zkVM integration
 ziskos = { git = "https://github.com/0xPolygonHermez/zisk.git" }
@@ -22,11 +29,14 @@ ziskos = { git = "https://github.com/0xPolygonHermez/zisk.git" }
 anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-bincode = "1.0"
-chrono = "0.4"
+bincode = "2.0.0-rc.3"
+chrono = { version = "0.4", features = ["serde"] }
 sha2 = "0.10"
 hex = "0.4.3"
 bs58 = "0.5"
+
+# Solana RBPF integration
+rbpf = "0.3.0"
 
 # Remove Solana dependencies - not needed for ZisK guest program
 # The BPF interpretation happens in pure Rust code compiled to RISC-V

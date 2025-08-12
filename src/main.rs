@@ -88,15 +88,11 @@ struct ZiskInputData {
 }
 
 fn read_zisk_input() -> Result<ZiskInputData> {
-    // Method 1: Try to read from ZisK input mechanism
-    // This would use the actual ZisK input API when available
+    // Use proper ZisK input function as per documentation
+    let input_bytes: Vec<u8> = read_input();
     
-    // Method 2: Environment variable (for testing)
-    if let Ok(input_hex) = std::env::var("ZISK_INPUT_HEX") {
-        let input_bytes = hex::decode(input_hex)
-            .context("Failed to decode hex input")?;
-        return parse_zisk_input_format(&input_bytes);
-    }
+    // Parse the input format
+    parse_zisk_input_format(&input_bytes)
     
     // Method 3: Default test data for demonstration
     create_test_zisk_input()
@@ -565,18 +561,25 @@ struct ZiskOutput {
 }
 
 fn output_to_zisk_journal(output: &ZiskOutput) -> Result<()> {
-    // This would use the actual ZisK journal API when available
-    // For now, output to stdout in a format ZisK can consume
+    // Use proper ZisK output functions as per documentation
+    // set_output(id, value) for each output value
     
-    println!("ZISK_OUTPUT_START");
-    println!("SUCCESS:{}", output.success);
-    println!("INSTRUCTIONS:{}", output.execution_summary.instructions_executed);
-    println!("COMPUTE_UNITS:{}", output.execution_summary.compute_units_consumed);
-    println!("CYCLES:{}", output.execution_summary.cycles_consumed);
-    println!("STATE_COMMITMENT:{}", hex::encode(output.state_commitment));
-    println!("PUBLIC_INPUTS:{}", hex::encode(&output.public_inputs));
-    println!("WITNESS_SIZE:{}", output.witness_data.len());
-    println!("ZISK_OUTPUT_END");
+    set_output(0, output.success as u32);
+    set_output(1, output.execution_summary.instructions_executed as u32);
+    set_output(2, output.execution_summary.compute_units_consumed as u32);
+    set_output(3, output.execution_summary.cycles_consumed as u32);
+    
+    // For complex data like state commitment, we need to split into u32 chunks
+    // State commitment is 32 bytes = 8 u32 values
+    for i in 0..8 {
+        let val = u32::from_le_bytes([
+            output.state_commitment[i * 4],
+            output.state_commitment[i * 4 + 1],
+            output.state_commitment[i * 4 + 2],
+            output.state_commitment[i * 4 + 3],
+        ]);
+        set_output(4 + i, val);
+    }
     
     Ok(())
 }

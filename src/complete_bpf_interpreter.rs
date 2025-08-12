@@ -150,7 +150,7 @@ impl BpfMemory {
         }
     }
     
-    fn resolve_memory_region(&self, addr: u64, size: usize) -> Result<(MemoryRegionType, usize)> {
+    pub fn resolve_memory_region(&self, addr: u64, size: usize) -> Result<(MemoryRegionType, usize)> {
         for region in &self.regions {
             if addr >= region.start && addr + size as u64 <= region.start + region.length as u64 {
                 let offset = (addr - region.start) as usize;
@@ -543,6 +543,20 @@ impl RealBpfInterpreter {
     
     pub fn set_debug_mode(&mut self, enabled: bool) {
         self.debug_mode = enabled;
+    }
+    
+    /// Get execution result from the context
+    pub fn get_execution_result(&self) -> ExecutionResult {
+        ExecutionResult {
+            success: self.context.error.is_none(),
+            logs: self.context.logs.clone(),
+            return_data: self.context.return_data.clone(),
+            error_message: self.context.error.clone(),
+            compute_units_consumed: self.context.compute_units_used,
+            instruction_count: self.context.instruction_count,
+            cycles_consumed: self.context.total_cycles,
+            exit_code: self.context.exit_code,
+        }
     }
     
     pub fn execute(&mut self) -> Result<()> {
