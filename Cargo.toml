@@ -1,82 +1,37 @@
 [package]
-name = "solana_test"
+name = "bpf-riscv-transpiler"
 version = "0.1.0"
 edition = "2021"
-
-# ZisK guest program - compiled to RISC-V
-# ZisK guest program - compiled to RISC-V
-# Note: ZisK expects a binary program, not a library
-# The main.rs will be the entry point for ZisK execution
-
-# Binary target for ZisK (RISC-V) - this is the main target
-[[bin]]
-name = "solana_test"
-path = "src/memory_optimized_zisk_main.rs"
-
-# Note: The host-testing binary is handled by features
-
-# ZisK target configuration
-[target.riscv64ima-zisk-zkvm-elf]
-rustflags = [
-    "-C", "target-feature=+m,+a,+c,+f,+d",
-    "-C", "link-arg=--no-relax",
-]
+description = "BPF to RISC-V Transpiler for ZisK Integration"
+license = "MIT"
+repository = "https://github.com/your-username/bpf-riscv-transpiler"
 
 [dependencies]
-# ZisK zkVM integration
-ziskos = { git = "https://github.com/0xPolygonHermez/zisk.git" }
-
-# Core Rust dependencies
+thiserror = "1.0"
 anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-bincode = "2.0.0-rc.3"
-chrono = { version = "0.4", features = ["serde"] }
-sha2 = "0.10"
-hex = "0.4.3"
-bs58 = "0.5"
-
-# Solana RBPF integration (only for host builds, not for ZisK RISC-V)
-# rbpf = "0.3.0"
-
-# Remove Solana dependencies - not needed for ZisK guest program
-# The BPF interpretation happens in pure Rust code compiled to RISC-V
 
 [dev-dependencies]
-# Testing dependencies
-tokio = { version = "1.0", features = ["full"] }
+criterion = "0.5"
 
-# Build script dependencies
-[build-dependencies]
-anyhow = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-reqwest = { version = "0.11", features = ["blocking", "json"] }
-tokio = { version = "1.0", features = ["full"] }
-base64 = "0.21"
-bs58 = "0.5"
-chrono = "0.4"
-
-# ================================================================
-# FEATURES
-# ================================================================
+[[bin]]
+name = "bpf-transpiler"
+path = "src/main.rs"
 
 [features]
-default = ["real-data"]
+default = []
+test-utils = []
+benchmarks = []
 
-# Feature: Use real Solana data fetching (enabled by default)
-real-data = []
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
 
-# Feature: Enable debug logging in ZisK environment
-debug-logging = []
-
-# Feature: Enable development mode with faster, less secure proofs
-dev-mode = []
-
-# Feature: Enable host testing (for development, not ZisK)
-host-testing = []
-
-# Feature: Enable comprehensive testing
-testing = []
+[profile.dev]
+opt-level = 0
+debug = true
 
 
