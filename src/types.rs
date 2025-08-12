@@ -129,6 +129,10 @@ pub enum RiscvInstruction {
     Sw { rs1: u8, rs2: u8, offset: i32 },
     Ld { rd: u8, rs1: u8, offset: i32 },
     Sd { rs1: u8, rs2: u8, offset: i32 },
+    Lb { rd: u8, rs1: u8, offset: i32 },
+    Lh { rd: u8, rs1: u8, offset: i32 },
+    Sb { rs1: u8, rs2: u8, offset: i32 },
+    Sh { rs1: u8, rs2: u8, offset: i32 },
     
     // Branches
     Beq { rs1: u8, rs2: u8, offset: i32 },
@@ -137,6 +141,8 @@ pub enum RiscvInstruction {
     Bge { rs1: u8, rs2: u8, offset: i32 },
     Bltu { rs1: u8, rs2: u8, offset: i32 },
     Bgeu { rs1: u8, rs2: u8, offset: i32 },
+    Bgt { rs1: u8, rs2: u8, offset: i32 },
+    Ble { rs1: u8, rs2: u8, offset: i32 },
     
     // Jumps
     Jal { rd: u8, offset: i32 },
