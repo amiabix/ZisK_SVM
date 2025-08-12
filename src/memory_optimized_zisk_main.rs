@@ -122,6 +122,9 @@ impl MemoryOptimizedBpfInterpreter {
             OPCODE_MUL64_REG => {
                 let src = self.registers[instruction.src_reg as usize];
                 let dst = &mut self.registers[instruction.dst_reg as usize];
+                println!("    MUL64_REG: R{} = R{} * R{} = {} * {} = {}", 
+                    instruction.dst_reg, instruction.dst_reg, instruction.src_reg, 
+                    *dst, src, *dst * src);
                 *dst = dst.wrapping_mul(src);
                 10
             },
@@ -221,6 +224,7 @@ impl MemoryOptimizedBpfInterpreter {
             // Exit
             OPCODE_EXIT => {
                 self.exit_code = self.registers[0] as u32;
+                self.success = true; // EXIT is a successful completion
                 return Ok(2);
             },
             
@@ -230,7 +234,7 @@ impl MemoryOptimizedBpfInterpreter {
             }
         };
         
-        self.instructions_executed += 1;
+        // Instruction counting moved to execute_program
         self.cycles_consumed += cycles;
         
         Ok(cycles as usize)
@@ -248,9 +252,20 @@ impl MemoryOptimizedBpfInterpreter {
             let instruction = self.decode_instruction(instruction_data)
                 .ok_or("Failed to decode instruction")?;
             
+            // Count instruction BEFORE executing it
+            self.instructions_executed += 1;
+            
+            // Debug: Print instruction details
+            println!("Executing instruction {}: opcode=0x{:02x}, dst_reg={}, src_reg={}, immediate={}", 
+                self.instructions_executed, instruction.opcode, instruction.dst_reg, instruction.src_reg, instruction.immediate);
+            
             match self.execute_instruction(&instruction) {
                 Ok(_) => {
+                    // Debug: Print register state after instruction
+                    println!("  R0={}, R1={}, R2={}", self.registers[0], self.registers[1], self.registers[2]);
+                    
                     if self.exit_code != 0 {
+                        println!("  EXIT with code: {}", self.exit_code);
                         break; // Exit instruction executed
                     }
                     offset += 8;
